@@ -1,0 +1,357 @@
+{% load static %}
+
+<style>
+  #body-weight-fat-charts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: 1fr;
+    padding: 4px 4px 0px 4px;
+  }
+
+  .legend {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .label-box {
+    border-radius: 50%;
+    width: 12px;
+    height: 12px;
+    margin-left: 1rem;
+    margin-right: 0.5rem;
+  }
+
+  .label-box.red {
+    background-color: rgb(255, 127, 14);
+  }
+
+  .label-box.blue {
+    background-color: rgb(31, 119, 180);
+  }
+
+  .label {
+    display: inline-flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .label .label-name {
+    font-size: 0.75em;
+  }
+
+  #body-weight-fat-charts-tooltip {
+    position: absolute;
+    background-color: darkslategray;
+    padding: 4px;
+    color: white;
+    z-index: 10000;
+    font-size: 12px;
+  }
+
+  #body-weight-fat-charts-tooltip p {
+    margin: 0;
+    display: block;
+    white-space: pre;
+  }
+</style>
+
+<div class="">
+  <div id="body-weight-fat-charts"></div>
+  <div class="legend">
+    <div class="label">
+      <div class="label-box red"></div>
+      <div class="label-name">Data from Smart Scale</div>
+    </div>
+    <div class="label">
+      <div class="label-box blue"></div>
+      <div class="label-name">Manual input from patient</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function generateIdForKey(key) {
+    return key
+      .toLowerCase()
+      .replaceAll(new RegExp(/\(.*\)/g), "")
+      .trim()
+      .replaceAll(new RegExp(/\s+/g), "-");
+  }
+
+  function redrawBodyMetricsChart(patientId, range, url) {
+    const activityChartsEl = $("#body-weight-fat-charts");
+    const { period } = range;
+
+    if (!document.getElementById("body-weight-fat-charts-tooltip")) {
+      d3.select("body")
+        .append("div")
+        .attr("id", "body-weight-fat-charts-tooltip")
+        .style("display", "none");
+    }
+
+    // set the dimensions and margins of the graph
+    const margin = { top: 30, right: 20, bottom: 30, left: 30 },
+      width = activityChartsEl.width() / 3 - margin.left - margin.right,
+      height = activityChartsEl.width() / 3 - margin.top - margin.bottom;
+
+    // Read the data
+    makeRequest("post", url, { patientId, range }).then((data) => {
+      // group the data: I want to draw one line per group
+      const sumstat = d3
+        .nest() // nest function allows to group the calculation per level of a factor
+        .key(function (d) {
+          return d.metric;
+        })
+        .entries(data);
+
+      // What is the list of groups?
+      allKeys = sumstat.map(function (d) {
+        return d.key;
+      });
+
+      // Add an svg element for each group. The will be one beside each other and will go on the next row when no more room available
+      const svg = d3
+        .select("#body-weight-fat-charts")
+        .selectAll("uniqueChart")
+        .data(sumstat)
+        .enter()
+        .append("svg")
+        .attr("font-size", "12px")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+        .append("g")
+        .attr("id", (d) => generateIdForKey(d.key))
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      // Add X axis --> it is a date format
+      const x = d3
+        .scaleUtc()
+        .domain([range.start, range.end])
+        .range([0, width]);
+      svg
+        .append("g")
+        .attr("transform", "translate(0," + height + ")")
+        .call(
+          d3
+            .axisBottom(x)
+            .ticks(3)
+            .tickFormat((d) => moment(d).format("MMM D"))
+        );
+
+      // Add Y axis
+      const yAxes = {};
+      svg.append("g").each(function (s) {
+        const svg1 = d3.select(this);
+        const values = s.values.map((s) => +s.value);
+        let domain = d3.extent(s.values.map((s) => +s.value));
+        let optimal = s.values[0]["optimal"];
+        if (optimal !== null && optimal !== undefined) {
+          optimal = parseInt(optimal, 10);
+          domain = [Math.min(optimal, domain[0]), Math.max(optimal, domain[1])];
+        }
+        const y = d3
+          .scaleLinear()
+          .domain([Math.floor(domain[0]), Math.ceil(domain[1])])
+          .range([height, 0]);
+        yAxes[s.key] = y;
+        svg1.call(d3.axisLeft(y).ticks(5));
+      });
+
+      // Color palette
+      const color = d3
+        .scaleOrdinal()
+        .domain(allKeys)
+        .range([
+          "#e41a1c",
+          "#377eb8",
+          "#4daf4a",
+          "#984ea3",
+          "#ff7f00",
+          "#ffff33",
+          "#a65628",
+          "#f781bf",
+          "#999999",
+        ]);
+
+      // Draw the line
+      svg
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .each(function (s) {
+          const path = d3.select(this);
+          const y = yAxes[s.key];
+          path.attr("d", (d) =>
+            d3
+              .line()
+              .x((d) => x(moment.utc(d.date, "DD/MM/YYYY").toDate()))
+              .y((d) => y(+d.value))(d.values)
+          );
+        });
+
+      // Draw optimal line
+      svg
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 1)
+        .each(function (s) {
+          if (s.values.length <= 0) return;
+
+          const path = d3.select(this);
+          const y = yAxes[s.key];
+          const optimal = s.values[0].optimal;
+          if (optimal === undefined || optimal === null) return;
+
+          const values = [
+            { date: range.start, value: optimal },
+            { date: range.end, value: optimal },
+          ];
+          const line = d3
+            .line()
+            .x((d) => x(d.date))
+            .y((d) => y(+d.value))(values);
+
+          path.attr("d", line);
+        });
+
+      svg
+        .append("g")
+        .attr("id", (d) => `${generateIdForKey(d.key)}-value-group`);
+
+      // Draw circles
+      sumstat.forEach((set) => {
+        const y = yAxes[set.key];
+        const apiValues = set.values.filter(
+          (v) => ["Aria", "AriaAir", "Aria2"].indexOf(v.metric_type) >= 0
+        );
+        const manualValues = set.values.filter((v) => v.metric_type === "API");
+
+        const cgCircle = svg
+          .select(`#${generateIdForKey(set.key)}-value-group`)
+          .selectAll(".circle-group")
+          .data(set.values)
+          .enter();
+        cgCircle
+          .append("circle")
+          .attr("fill", (v) =>
+            v.metric_type !== "API" ? "rgb(255, 127, 14)" : "rgb(31, 119, 180)"
+          )
+          .attr("r", 4)
+          .attr("cx", (d) => x(moment.utc(d.date, "DD/MM/YYYY").toDate()))
+          .attr("cy", (d) => y(+d.value));
+      });
+
+      const units = {
+        body_weight: "kg",
+        body_mass_index: "BMI",
+        body_fat: "%",
+      };
+
+      // Add titles
+      svg
+        .append("text")
+        .attr("text-anchor", "middle")
+        .attr("y", -21)
+        .attr("x", width / 2)
+        .text((d) => snakeCaseToNormalCase(d.key) + " (" + units[d.key] + ")");
+
+      const tooltip = d3.select("#body-weight-fat-charts-tooltip");
+      const tooltipLine = svg
+        .append("line")
+        .attr("id", (s) => `${s.key}-body-tooltipline`);
+      const tooltipCircle = svg
+        .append("circle")
+        .attr("id", (s) => `${s.key}-body-tooltipcircle`);
+
+      const dates = getDatesInRange(range.start, range.end);
+
+      svg
+        .append("rect")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("opacity", 0)
+        .style("cursor", "pointer")
+        .each(function (s) {
+          const rectOverlay = d3.select(this);
+          rectOverlay.on("mouseover", function () {
+            tooltip.style("display", "block");
+            d3.select(`#${s.key}-body-tooltipline`).style("display", "block");
+            d3.select(`#${s.key}-body-tooltipcircle`).style("display", "block");
+          });
+          rectOverlay.on("mouseout", function () {
+            tooltip.style("display", "none");
+            d3.select(`#${s.key}-body-tooltipline`).style("display", "none");
+            d3.select(`#${s.key}-body-tooltipcircle`).style("display", "none");
+          });
+          rectOverlay.on("mousemove", function () {
+            const mouse = d3.mouse(this);
+            let date = x.invert(mouse[0]);
+            const bisectIndex = d3.bisectLeft(dates, date);
+            const bisectedDate = dates[bisectIndex];
+            const diffHours =
+              (bisectedDate.getTime() - date.getTime()) / 1000 / 60 / 60;
+            date =
+              diffHours < 12
+                ? bisectedDate
+                : dates[Math.max(0, bisectIndex - 1)];
+
+            const y = yAxes[s.key];
+            const value = s.values.find(
+              (d) =>
+                moment.utc(d.date, "DD/MM/YYYY").toDate().getTime() ===
+                date.getTime()
+            );
+
+            if (value) {
+              d3.select(`#${s.key}-body-tooltipline`)
+                .attr("stroke", "black")
+                .attr("opacity", 0.5)
+                .attr("x1", x(date))
+                .attr("x2", x(date))
+                .attr("y1", 0)
+                .attr("y2", height);
+
+              d3.select(`#${s.key}-body-tooltipcircle`)
+                .attr("fill", "red")
+                .attr("stroke", "red")
+                .attr("fill-opacity", 0.5)
+                .attr("cx", x(date))
+                .attr("cy", y(value.value))
+                .attr("r", 4);
+
+              const optimal = s.values[0].optimal;
+              let optimalString;
+              if (
+                optimal &&
+                Number.isFinite(optimal.min) &&
+                Number.isFinite(optimal.max)
+              ) {
+                optimalString = `${formatNumber(optimal.min)} - ${formatNumber(
+                  optimal.max
+                )}`;
+              } else if (Number.isFinite(optimal)) {
+                optimalString = String(formatNumber(optimal));
+              }
+
+              const padding = 20;
+              tooltip
+                .style("left", `${d3.event.pageX + padding}px`)
+                .style("top", `${d3.event.pageY + padding}px`).html(`
+<p>${snakeCaseToNormalCase(s.key)}: ${formatNumber(value.value, 1)}</p>
+${optimalString ? "<p>Optimal value: " + optimalString + "</p>" : ""}
+<p>Date: ${moment.utc(date).format("MMM DD YYYY")}</p>`);
+            }
+          });
+        });
+    });
+  }
+
+  function redrawBodyWeightFatCharts({ patientId, range }) {
+    redrawBodyMetricsChart(patientId, range, "{% url 'healthcare:body_weight_metrics' %}");
+    redrawBodyMetricsChart(patientId, range, "{% url 'healthcare:body_fat_metrics' %}");
+  }
+</script>

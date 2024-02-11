@@ -1,0 +1,48 @@
+{% extends "common/_base.html" %}
+
+{% block content %}
+<style>
+  .custom-button {
+    text-align: center;
+    background: #6ec33d;
+    margin: 0 0 1em 0;
+    border-radius: 1000px;
+    display: flex;
+  }
+
+  #dashboard-btn {
+    background-color: #0367fd;
+  }
+
+  .custom-button a {
+    color: white;
+    text-decoration: none;
+    padding: 18px;
+  }
+
+  html,
+  body {
+    height: 100vh;
+  }
+
+  .login-form {
+    height: 100vh;
+    flex: 1 0 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+</style>
+
+<div class="login-form">
+  {% if messages %}
+    {% for message in messages %}
+      <div role="alert" {% if message.tags %} class="{{ message.tags }} alert alert-danger"{% endif %}>{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  {% include 'index/_login_form.html' %}
+</div>
+
+{% endblock %}

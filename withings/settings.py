@@ -11,6 +11,8 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS = [
+    'admin_interface',
+    'colorfield',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -24,6 +26,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'knox',
     'custom_logs',
+    'accounts',
+    'healthcare',
 ]
 
 MIDDLEWARE = [

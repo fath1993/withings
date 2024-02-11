@@ -1,0 +1,26 @@
+{% extends "common/_base.html" %}
+
+{% block content %}
+<style>
+  .grid-wrapper {
+    margin: 0;
+    padding: 0;
+    display: grid;
+    height: calc(100% - 56px);
+    grid-template-columns: 2.5fr 9fr;
+    grid-template-rows: 1fr;
+  }
+
+  html,
+  body {
+    position: fixed;
+    width: 100%;
+    background-color: #d7faf8;
+  }
+</style>
+
+<div class="grid-wrapper container-fluid">
+  {% include "dashboard/_menu.html" %}
+  {% include "dashboard/_main.html" %}
+</div>
+{% endblock %}

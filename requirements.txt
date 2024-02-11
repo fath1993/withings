@@ -8,3 +8,4 @@ django-jalali
 django-cors-headers
 django-rest-knox
 djangorestframework
+requests
