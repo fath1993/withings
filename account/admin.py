@@ -1,5 +1,5 @@
 from django.contrib import admin
-from accounts.models import Profile, SMSAuthCode
+from account.models import Profile, SMSAuthCode
 
 
 @admin.register(Profile)

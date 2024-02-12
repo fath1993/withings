@@ -5,7 +5,7 @@ def fetch_data_from_http_post(request, item: str, context):
             result_item = None
     except:
         result_item = None
-    context[item.replace('-', '_')] = result_item
+    context[item] = result_item
     print(f'{item}: {result_item}')
     return result_item
 

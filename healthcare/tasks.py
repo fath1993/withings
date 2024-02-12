@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Optional
-from accounts.models import Profile
+from account.models import Profile
 from healthcare.models import ActivitySummary, BodyFatLog, BodyWeightLog, FoodSummary, HeartRateSummary, SleepSummary, WaterSummary
 
 

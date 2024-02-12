@@ -1,6 +1,6 @@
 from django.core.management import base
 
-from accounts.tests import test_auth_simple, test_auth_sms_request, test_auth_auth_sms_validate, \
+from account.tests import test_auth_simple, test_auth_sms_request, test_auth_auth_sms_validate, \
     test_auth_eliminate_all, test_register, test_register_confirm, test_account
 
 

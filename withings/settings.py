@@ -26,8 +26,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'knox',
     'custom_logs',
-    'accounts',
+    'account',
     'healthcare',
+    'website',
 ]
 
 MIDDLEWARE = [
@@ -122,13 +123,13 @@ SITE_ID = 1
 
 CORS_ALLOW_ALL_ORIGINS = True
 
-BASE_URL = 'http://185.221.237.179'
+BASE_URL = 'https://withings.a-fathollahi.com/'
 
-BASE_FRONT_URL = 'http://185.221.237.179/'
+BASE_FRONT_URL = 'https://withings.a-fathollahi.com/'
 
-BASE_CONTENT_URL = 'http://185.221.237.179/'
+BASE_CONTENT_URL = 'https://withings.a-fathollahi.com/'
 
-OAUTH2_CALLBACK_URL = 'http://185.221.237.179/account/auth2_callback'
+OAUTH2_CALLBACK_URL = 'https://withings.a-fathollahi.com/account/auth2_callback/'
 
 WHITINGS_API_Endpoint = 'https://wbsapi.withings.net'
 

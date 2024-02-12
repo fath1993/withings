@@ -1,7 +1,7 @@
 from collections import Counter
 from django.db import models
 
-from accounts.models import Profile
+from account.models import Profile
 
 
 class ActivitySummary(models.Model):

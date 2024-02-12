@@ -1,22 +1,15 @@
 from datetime import timedelta
-
-from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 
-from accounts.models import Profile
-from accounts.serializer import ProfileSerializer
+from account.models import Profile
+from account.serializer import ProfileSerializer
 from healthcare.models import ActivitySummary
 from healthcare.utils import get_patient_id, format_date, get_range, get_week_end_date, get_week_start_date
 from healthcare.serializers import HeartRateSummarySerializer, SleepSummarySerializer
-
-
-@user_passes_test(lambda user: user.is_superuser)
-def dashboard(request):
-    return render(request, 'dashboard.html')
 
 
 @api_view(('GET',))
