@@ -24,12 +24,14 @@ class SMSAuthCode(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, related_name='user_profile', on_delete=models.CASCADE, null=False, blank=False,
                                 editable=False, verbose_name='کاربر')
-    userid = models.CharField(max_length=255, null=True, blank=True, verbose_name='آیدی کاربر')
-    access_token = models.CharField(max_length=255, null=True, blank=True, verbose_name='توکن دسترسی')
-    refresh_token = models.CharField(max_length=255, null=True, blank=True, verbose_name='توکن بروز رسانی')
-    scope = models.CharField(max_length=255, null=True, blank=True, verbose_name='سطح دسترسی')
-    expiration_date = jmodel.jDateTimeField(verbose_name='تاریخ انقضا')
-    token_type = models.CharField(max_length=255, null=True, blank=True, verbose_name='نوع توکن')
+    userid = models.CharField(max_length=255, null=True, blank=True, editable=False, verbose_name='آیدی کاربر')
+    access_token = models.CharField(max_length=255, null=True, blank=True, editable=False, verbose_name='توکن دسترسی')
+    refresh_token = models.CharField(max_length=255, null=True, blank=True, editable=False, verbose_name='توکن بروز رسانی')
+    scope = models.CharField(max_length=255, null=True, blank=True, editable=False, verbose_name='سطح دسترسی')
+    expiration_date = jmodel.jDateTimeField(null=True, blank=True, editable=False, verbose_name='تاریخ انقضا')
+    token_type = models.CharField(max_length=255, null=True, blank=True, editable=False, verbose_name='نوع توکن')
+
+    getmeas_data = models.JSONField(null=True, blank=True, editable=False, verbose_name='getmeas data')
 
     def __str__(self):
         return self.user.username

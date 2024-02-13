@@ -22,10 +22,14 @@
                 <a class="nav-link" href="{% url 'website:index' %}">Home</a>
             </li>
             <li class="nav-item">
-                {% if not request.user|has_user_active_token %}
-                    <a class="nav-link" href="{% url 'accounts:auth-withings' %}">Connect to Withings</a>
+                {% if not request.user|has_user_token %}
+                    <a class="nav-link" href="{% url 'accounts:auth-withings' %}">Connect with Withings</a>
                 {% else %}
-                    <a class="nav-link" href="javascript:void(0)">Connected</a>
+                    {% if request.user|has_user_active_token %}
+                    <a class="nav-link" href="javascript:void(0)"><span style="color: green">Connected</span> with Withings</a>
+                    {% else %}
+                    <a class="nav-link" href="{% url 'accounts:auth-withings-refresh' %}"><span style="color: orange">ReConnect</span>  with Withings</a>    
+                    {% endif %}    
                 {% endif %}
             </li>
             <li class="nav-item">
