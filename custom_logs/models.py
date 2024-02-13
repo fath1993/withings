@@ -5,18 +5,18 @@ LOG_LEVEL = (('DEBUG', 'DEBUG'), ('INFO', 'INFO'))
 
 
 class CustomLog(models.Model):
-    description = models.TextField(default='no description', null=False, blank=True, verbose_name='توضیحات ')
+    description = models.TextField(default='no description', null=False, blank=True, verbose_name='description')
     log_level = models.CharField(default='INFO', max_length=255, choices=LOG_LEVEL, null=False, blank=False,
-                                 verbose_name='سطح لوگ ')
-    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='زمان و تاریخ ایجاد')
+                                 verbose_name='log_level')
+    created_at = jmodels.jDateTimeField(auto_now_add=True, verbose_name='created_at')
 
     def __str__(self):
         return self.description[:50]
 
     class Meta:
         ordering = ['-created_at', ]
-        verbose_name = 'لاگ'
-        verbose_name_plural = 'لاگ ها'
+        verbose_name = 'log'
+        verbose_name_plural = 'logs'
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

@@ -28,7 +28,7 @@
                     {% if request.user|has_user_active_token %}
                     <a class="nav-link" href="javascript:void(0)"><span style="color: green">Connected</span> with Withings</a>
                     {% else %}
-                    <a class="nav-link" href="{% url 'accounts:auth-withings-refresh' %}"><span style="color: orange">ReConnect</span>  with Withings</a>    
+                    <a class="nav-link" href="{% url 'accounts:auth-withings' %}"><span style="color: orange">ReConnect</span>  with Withings</a>    
                     {% endif %}    
                 {% endif %}
             </li>

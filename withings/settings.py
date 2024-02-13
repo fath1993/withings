@@ -99,7 +99,7 @@ REST_KNOX = {
     'AUTH_HEADER_PREFIX': 'BatoboxToken',
 }
 
-LANGUAGE_CODE = 'fa-ir'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'Asia/Tehran'
 

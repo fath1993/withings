@@ -1,9 +1,11 @@
+import jdatetime
 import requests
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 
 from custom_logs.models import custom_log
 from website.templatetags.website_custom_tags import has_user_active_token
+from withings.settings import CLIENT_ID, SECRET
 
 
 def index_view(request):
@@ -11,6 +13,35 @@ def index_view(request):
     if not request.user.is_authenticated:
         return redirect('accounts:login')
     else:
+        if has_user_active_token(request.user):
+            refresh_token_url = 'https://wbsapi.withings.net/v2/oauth2'
+
+            payload = {
+                'action': 'requesttoken',
+                'grant_type': 'refresh_token',
+                'client_id': f'{CLIENT_ID}',
+                'client_secret': f'{SECRET}',
+                'refresh_token': f'{request.user.user_profile.refresh_token}'
+            }
+            custom_log(str(payload))
+
+            r = requests.post(refresh_token_url, data=payload)
+            result_data = r.json()
+            profile = request.user.user_profile
+            userid = result_data['body']['userid']
+            access_token = result_data['body']['access_token']
+            refresh_token = result_data['body']['refresh_token']
+            scope = result_data['body']['scope']
+            expires_in = result_data['body']['expires_in']
+            token_type = result_data['body']['token_type']
+            profile.userid = userid
+            profile.access_token = access_token
+            profile.refresh_token = refresh_token
+            profile.scope = scope
+            profile.expiration_date = jdatetime.datetime.now() + jdatetime.timedelta(seconds=int(expires_in))
+            profile.token_type = token_type
+            profile.save()
+            custom_log(f'Data: {result_data}')
         return render(request, 'index.html', context)
 
 
