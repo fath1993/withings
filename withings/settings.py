@@ -11,6 +11,7 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 INSTALLED_APPS = [
+    'django_crontab',
     'admin_interface',
     'colorfield',
     'django.contrib.admin',
@@ -135,3 +136,10 @@ WHITINGS_API_Endpoint = 'https://wbsapi.withings.net'
 
 CLIENT_ID = env('CLIENT_ID')
 SECRET = env('SECRET')
+
+
+FITBIT_OAUTH2_CALLBACK_URL = 'https://withings.a-fathollahi.com/account/fitbit-auth2-callback/'
+FITBIT_API_Endpoint = 'https://wbsapi.withings.net'
+
+FITBIT_CLIENT_ID = env('FITBIT_CLIENT_ID')
+FITBIT_SECRET = env('FITBIT_SECRET')

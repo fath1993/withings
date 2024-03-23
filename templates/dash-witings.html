@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block main %}
+    <div class="container">
+        <div id="loader" class="loader"></div>
+        <div id="withings-main-container" hidden>
+            <!-- Bootstrap Charts - START -->
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Weight</h3>
+                            </div>
+                            <div id="chart_weight" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Fat Free Mass</h3>
+                            </div>
+                            <div id="chart_fat_free_mass" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Fat Ratio</h3>
+                            </div>
+                            <div id="chart_fat_ratio" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Fat Mass Weight</h3>
+                            </div>
+                            <div id="chart_fat_mass_weight" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Muscle Mass</h3>
+                            </div>
+                            <div id="chart_muscle_mass" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Bone Mass</h3>
+                            </div>
+                            <div id="chart_bone_mass" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_body %}
+    <!-- you need to include the shieldui css and js assets in order for the charts to work -->
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'assets/css/light_bootstrap_all.min.css' %}"/>
+    <script type="text/javascript"
+            src="{% static 'assets/js/shieldui_all.min.js' %}"></script>
+
+    <script>
+        // Function to show loader
+        function showLoader() {
+            document.getElementById("loader").style.display = 'block';
+        }
+
+        // Function to hide loader
+        function hideLoader() {
+            document.getElementById("loader").hidden = true;
+            document.getElementById("withings-main-container").hidden = false;
+        }
+
+        function fetchDataAndRenderChart() {
+            // Count to track the number of fetch requests completed
+            let fetchCount = 0;
+            
+            const dataArray = {}
+
+            // Callback function to render chart once all fetch requests are completed
+            function hide_loader_and_render_all_charts() {
+                fetchCount++;
+                if (fetchCount === 5) {
+                    var chart_data_weight = setInterval(() => {
+                        if (dataArray['withings_fetch_weight'] !== null && dataArray['withings_fetch_fat_free_mass'] !== null && dataArray['withings_fetch_fat_ratio'] !== null && dataArray['withings_fetch_fat_mass_weight'] !== null && dataArray['withings_fetch_muscle_mass'] !== null && dataArray['withings_fetch_bone_mass'] !== null){
+                            clearInterval(chart_data_weight);
+                            renderCharts(dataArray)
+                            hideLoader();
+                        }
+                    }, 1000)
+                }
+            }
+
+            function withings_fetch_weight() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ weight_range.0 }}")
+                formData.append('date_to', "{{ weight_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-weight' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_weight'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_weight'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-weight:', error);
+                        document.getElementById('chart_weight').innerText = 'No Data'
+                    });
+            }
+            
+            function withings_fetch_fat_free_mass() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ fat_free_mass_range.0 }}")
+                formData.append('date_to', "{{ fat_free_mass_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-fat-free-mass' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_fat_free_mass'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_fat_free_mass'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-fat-free-mass:', error);
+                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
+                    });
+            }
+            
+            function withings_fetch_fat_ratio() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ fat_ratio_range.0 }}")
+                formData.append('date_to', "{{ fat_ratio_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-fat-ratio' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_fat_ratio'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_fat_ratio'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-fat-ratio:', error);
+                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
+                    });
+            }
+            
+            function withings_fetch_fat_mass_weight() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ fat_mass_weight_range.0 }}")
+                formData.append('date_to', "{{ fat_mass_weight_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-fat-mass-weight' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_fat_mass_weight'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_fat_mass_weight'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-fat-mass-weight:', error);
+                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
+                    });
+            }
+            
+            function withings_fetch_muscle_mass() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ muscle_mass_range.0 }}")
+                formData.append('date_to', "{{ muscle_mass_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-muscle-mass' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_muscle_mass'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_muscle_mass'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-muscle-mass:', error);
+                        document.getElementById('chart_muscle_mass').innerText = 'No Data'
+                    });
+            }
+            
+            function withings_fetch_bone_mass() {
+                const formData = new FormData();
+                formData.append('date_from', "{{ bone_mass_range.0 }}")
+                formData.append('date_to', "{{ bone_mass_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:withings-fetch-bone-mass' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        const measuregrps = data['body']['measuregrps'];
+                        let weight_data_array = []
+                        let weight_data_value_array = []
+                        measuregrps.forEach(item => {
+                            const check_weight = parseInt(item['measures'][0]['value'])
+                            weight_data_value_array.push(check_weight);
+                        });
+
+                        measuregrps.forEach(item => {
+                            const weight = parseInt(item['measures'][0]['value'])
+                            if (isOutlier(weight, weight_data_value_array) === false) {
+                                const date = new Date(item['date'] * 1000); // we convert datestamp to datetime
+                                const day = date.getDate();
+                                const hours = date.getHours();
+                                const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                                const weekday = weekdays[date.getDay()];
+                                
+                                const value = weight / 1000
+                                weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
+                            }
+                        });
+                        dataArray['withings_fetch_bone_mass'] = weight_data_array
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['withings_fetch_bone_mass'] = 'fetch_but_null'
+                        console.error('Error fetching data from withings-fetch-bone-mass:', error);
+                        document.getElementById('chart_bone_mass').innerText = 'No Data'
+                    });
+            }
+            
+            withings_fetch_weight()
+            withings_fetch_fat_free_mass()
+            withings_fetch_fat_ratio()
+            withings_fetch_fat_mass_weight()
+            withings_fetch_muscle_mass()
+            withings_fetch_bone_mass()
+
+            function renderCharts(dataArray) {
+                const data1 = dataArray['withings_fetch_weight']
+                const data2 = dataArray['withings_fetch_fat_free_mass']
+                const data3 = dataArray['withings_fetch_fat_ratio']
+                const data4 = dataArray['withings_fetch_fat_mass_weight']
+                const data5 = dataArray['withings_fetch_muscle_mass']
+                const data6 = dataArray['withings_fetch_bone_mass']
+                console.log(data1)
+                console.log(data2)
+                console.log(data3)
+                console.log(data4)
+                console.log(data5)
+                console.log(data6)
+                jQuery(function ($) {
+                    try {
+                        $("#chart_weight").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function(text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data1.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Weight (Kg)"
+                                }
+                            },
+                            dataSeries: [{
+                                collectionAlias: "weight",
+                                seriesType: "line",
+                                data: data1
+                            }]
+                        });
+                    } catch (err){
+                        console.log('renderWeightChart err: ' + err)
+                        document.getElementById('chart_weight').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_fat_free_mass").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function(text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data2.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Fat Free Mass (Kg)"
+                                }
+                            },
+                            dataSeries: [{
+                                collectionAlias: "fat free mass",
+                                seriesType: "line",
+                                data: data2
+                            }]
+                        });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_fat_ratio").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data3.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Fat Ratio (%)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "fat ratio",
+                            seriesType: "line",
+                            data: data3
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_fat_mass_weight").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data4.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Fat Mass Weight (Kg)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "fat mass weight",
+                            seriesType: "line",
+                            data: data4
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_muscle_mass").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data5.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Muscle Mass (Kg)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "miscle mass",
+                            seriesType: "line",
+                            data: data5
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_muscle_mass').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_bone_mass").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data6.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Bone Mass (Kg)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "bone mass",
+                            seriesType: "line",
+                            data: data6
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_bone_mass').innerText = 'No Data'
+                    }
+                });
+                hideDemoTspans()
+            }
+        }
+        
+        function isOutlier(number, numbers) {
+            // Calculate the mean of the numbers
+            const mean = numbers.reduce((acc, val) => acc + val, 0) / numbers.length;
+        
+            // Calculate the standard deviation
+            const stdDev = Math.sqrt(numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length);
+        
+            // Check if the number is an outlier
+            return (number < (mean - 2 * stdDev) || number > (mean + 2 * stdDev));
+        }
+        
+        function hideDemoTspans() {
+            var demo_cleaner = setInterval(() => {
+                const tspans = document.querySelectorAll('tspan');
+                if (tspans.length > 0) {
+                    tspans.forEach(tspan => {
+                        if (tspan.textContent.trim() === 'Demo Version') {
+                            tspan.style.display = 'none';
+                        }
+                    });
+                    tspans.forEach(tspan => {
+                        if (tspan.textContent.trim() === 'Shield UI Chart') {
+                            tspan.style.display = 'none';
+                        }
+                    });
+                    const exportButtons = document.querySelectorAll('.shield-export-button-img');
+                    exportButtons.forEach(exportButton => {
+                        exportButton.innerHTML += '<i class="fa fa-download"></i>';
+                    });
+                    
+                    clearInterval(demo_cleaner);
+                }
+            }, 1000)
+        }
+
+        $(document).ready(function() {
+            showLoader();
+            fetchDataAndRenderChart();
+        })
+
+    </script>
+{% endblock %}

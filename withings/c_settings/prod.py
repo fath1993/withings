@@ -6,7 +6,7 @@ DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
-CSRF_TRUSTED_ORIGINS = ['*']
+CSRF_TRUSTED_ORIGINS = ['https://withings.a-fathollahi.com/']
 
 DATABASES['default'] = {
     'ENGINE': 'django.db.backends.sqlite3',
@@ -17,6 +17,10 @@ DATABASES['log_db'] = {
     'ENGINE': 'django.db.backends.sqlite3',
     'NAME': BASE_DIR / 'log_db.sqlite3',
 }
+
+CRONJOBS = [
+    ('*/59 * * * *', 'account.tasks.refresh_tokens',),
+]
 
 # DATABASES['default'] = {
 #     'ENGINE': 'django.db.backends.postgresql_psycopg2',

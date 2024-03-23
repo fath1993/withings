@@ -3,15 +3,20 @@
 <!doctype html>
 <html lang="en" data-bs-theme="auto">
 <head>
+    <script src="{% static 'assets/js/color-modes.js' %}"></script>
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>login</title>
+    <meta name="description" content="">
+    <meta name="author" content="A-Fath">
+    <meta name="generator" content="A-Fath">
+    <title>{{ page_title }}</title>
 
-    <link rel="stylesheet" href="{% static 'assets/css/sign-in.css' %}">
-    <link rel="icon" type="image/x-icon" href="{% static 'assets/img/favicon.ico' %}">
-
+    <link rel="canonical" href="https://withings.a-fathollahi.com/">
     <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
-
+    <link rel="stylesheet" type="text/css" href="{% static 'font-awesome/css/font-awesome.min.css' %}" />
+    <script type="text/javascript" src="{% static 'assets/js/jquery-3.7.1.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'bootstrap/js/bootstrap.min.js' %}"></script>
     <style>
         .bd-placeholder-img {
             font-size: 1.125rem;
@@ -90,34 +95,19 @@
             display: block !important;
         }
     </style>
+
+    <!-- Custom styles for this template -->
+    <link href="{% static 'assets/css/navbar-fixed.css' %}" rel="stylesheet">
+    {% block extra_head %}{% endblock %}
 </head>
-<body class="d-flex align-items-center py-4 bg-body-tertiary">
 
-<main class="form-signin w-100 m-auto">
-    <form action="{% url 'accounts:login' %}" method="post">
-        {% csrf_token %}
-        <img class="mb-4 rounded-circle" src="{% static 'assets/img/logo.png' %}" alt="" style="width: 72px; height: 72px; object-fit: cover">
-        <h1 class="h3 mb-3 fw-normal">Please sign in</h1>
+<body>
 
-        <div class="form-floating">
-            <input type="text" class="form-control" id="username" name="username" placeholder="username" autocomplete="new-password" required>
-            <label for="username">Username</label>
-        </div>
-        <div class="form-floating">
-            <input type="password" class="form-control" id="password" name="password" placeholder="password" autocomplete="new-password" required>
-            <label for="password">Password</label>
-        </div>
-        {% if err %}
-        <div class="form-floating">
-            <span class="form-control-plaintext text-danger">{{ err }}</span>
-        </div>
-        {% endif %}
-        <button class="btn btn-primary w-100 py-2" type="submit">Sign in</button>
-        <small class="mt-5 mb-3 text-body-secondary text-muted">you have no account? <a href="javascript:void(0)" class="text-primary">register</a></small>
-        <p class="mt-5 mb-3 text-body-secondary">&copy; 2024</p>
-    </form>
-</main>
-<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+{% include 'extra/navbar.html' %}
+
+{% block main %}{% endblock %}
+
+{% block extra_body %}{% endblock %}
 
 </body>
 </html>

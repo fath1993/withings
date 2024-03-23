@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block main %}
+<div class="container">
+
+<div class="page-header">
+    {% if not error %}
+    <h1 class="text-success">Welcome <span class="text-warning">{{ request.user.username }}</span></h1>
+    <h2>You should connect to service from menu</h2>
+    <h6 class="text-info">please note all provided data will be used as statistic in future</h6>
+    {% else %}
+    <h1 class="text-success">Message:</h1>
+    <h2>{{ error }}</h2>
+    {% endif %}
+</div>
+</div>    
+{% endblock %}
