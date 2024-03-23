@@ -39,6 +39,10 @@ def filter_view(request):
                 spo2_range = fetch_data_from_http_get(request, 'spo2_range', context)
                 heart_rate_range = fetch_data_from_http_get(request, 'heart_rate_range', context)
                 context['patient_id'] = patient_id
+                context['oxygen_range_default'] = oxygen_range
+                context['sleep_range_default'] = sleep_range
+                context['spo2_range_default'] = spo2_range
+                context['heart_rate_range_default'] = heart_rate_range
                 context['oxygen_range'] = get_date_range_strf_time(oxygen_range)
                 context['sleep_range'] = get_date_range_strf_time(sleep_range)
                 context['spo2_range'] = get_date_range_strf_time(spo2_range)
@@ -61,6 +65,12 @@ def filter_view(request):
                 muscle_mass_range = fetch_data_from_http_get(request, 'muscle_mass_range', context)
                 bone_mass_range = fetch_data_from_http_get(request, 'bone_mass_range', context)
                 context['patient_id'] = patient_id
+                context['weight_range_default'] = weight_range
+                context['fat_free_mass_range_default'] = fat_free_mass_range
+                context['fat_ratio_range_default'] = fat_ratio_range
+                context['fat_mass_weight_range_default'] = fat_mass_weight_range
+                context['muscle_mass_range_default'] = muscle_mass_range
+                context['bone_mass_range_default'] = bone_mass_range
                 context['weight_range'] = get_date_range_timestamp(weight_range)
                 context['fat_free_mass_range'] = get_date_range_timestamp(fat_free_mass_range)
                 context['fat_ratio_range'] = get_date_range_timestamp(fat_ratio_range)
@@ -91,11 +101,15 @@ def fitbit_dash_view(request):
     if request.user.is_authenticated:
         if fitbit_has_user_token(request.user):
             if fitbit_has_user_active_token(request.user):
-                context['patient_id'] = request.user.user_profile.fitbit_userid
-                context['oxygen_range'] = get_date_range_strf_time('today')
-                context['sleep_range'] = get_date_range_strf_time('today')
-                context['spo2_range'] = get_date_range_strf_time('today')
-                context['heart_rate_range'] = get_date_range_strf_time('today')
+                context['patient_id'] = request.user.id
+                context['oxygen_range_default'] = 'all_time'
+                context['sleep_range_default'] = 'all_time'
+                context['spo2_range_default'] = 'all_time'
+                context['heart_rate_range_default'] = 'all_time'
+                context['oxygen_range'] = get_date_range_strf_time('all_time')
+                context['sleep_range'] = get_date_range_strf_time('all_time')
+                context['spo2_range'] = get_date_range_strf_time('all_time')
+                context['heart_rate_range'] = get_date_range_strf_time('all_time')
                 return render(request, 'dash-fitbit.html', context)
             else:
                 context['error'] = 'fitbit_has_user_active_token false'
@@ -113,13 +127,19 @@ def witings_dash_view(request):
             if has_user_active_token(request.user):
                 if not witings_token_is_active(request.user):
                     return redirect('website:witings')
-                context['patient_id'] = request.user.user_profile.userid
-                context['weight_range'] = get_date_range_timestamp('today')
-                context['fat_free_mass_range'] = get_date_range_timestamp('today')
-                context['fat_ratio_range'] = get_date_range_timestamp('today')
-                context['fat_mass_weight_range'] = get_date_range_timestamp('today')
-                context['muscle_mass_range'] = get_date_range_timestamp('today')
-                context['bone_mass_range'] = get_date_range_timestamp('today')
+                context['patient_id'] = request.user.id
+                context['weight_range_default'] = 'all_time'
+                context['fat_free_mass_range_default'] = 'all_time'
+                context['fat_ratio_range_default'] = 'all_time'
+                context['fat_mass_weight_range_default'] = 'all_time'
+                context['muscle_mass_range_default'] = 'all_time'
+                context['bone_mass_range_default'] = 'all_time'
+                context['weight_range'] = get_date_range_timestamp('all_time')
+                context['fat_free_mass_range'] = get_date_range_timestamp('all_time')
+                context['fat_ratio_range'] = get_date_range_timestamp('all_time')
+                context['fat_mass_weight_range'] = get_date_range_timestamp('all_time')
+                context['muscle_mass_range'] = get_date_range_timestamp('all_time')
+                context['bone_mass_range'] = get_date_range_timestamp('all_time')
                 return render(request, 'dash-witings.html', context)
             else:
                 context['error'] = 'witings_has_user_active_token false'
@@ -135,27 +155,41 @@ def withings_fetch_weight_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                custom_log(date_from)
-                custom_log(date_to)
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "1",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "1",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "1",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
 
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
@@ -179,24 +213,42 @@ def withings_fetch_fat_free_mass_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "5",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
+
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "5",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "5",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
+
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
                     if response.status_code == 200:
@@ -219,24 +271,42 @@ def withings_fetch_fat_ratio_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "6",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
+
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "6",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "6",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
+
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
                     if response.status_code == 200:
@@ -259,34 +329,46 @@ def withings_fetch_fat_mass_weight_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "8",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
+
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "8",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "8",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
+
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
                     if response.status_code == 200:
                         data = response.json()
-
-                        # sample response at: https://developer.withings.com/api-reference#tag/measure/operation/measure-getmeas
-                        #
-                        # profile = request.user.user_profile
-                        # profile.getmeas_data = data
-                        # profile.save()
                         return JsonResponse(data)
                     else:
                         return JsonResponse({"message": f"response.status_code == {response.status_code}"})
@@ -305,24 +387,42 @@ def withings_fetch_muscle_mass_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "76",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
+
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "76",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "76",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
+
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
                     if response.status_code == 200:
@@ -351,24 +451,42 @@ def withings_fetch_bone_mass_view(request):
     if request.user.is_authenticated:
         if has_user_token(request.user):
             if has_user_active_token(request.user):
-                endpoint_url = 'https://wbsapi.withings.net/measure'
-
-                headers = {
-                    'Authorization': f'Bearer {request.user.user_profile.access_token}'
-                }
-
+                patient_id = fetch_data_from_http_post(request, 'patient_id', context)
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                data = {
-                    "action": "getmeas",
-                    "meastype": "88",
-                    "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
-                    # "startdate": date_from,
-                    # "enddate": date_to,
-                    # "lastupdate": "",
-                    # "offset": "",
+                if request.user.is_superuser:
+                    if patient_id:
+                        try:
+                            user = User.objects.get(id=patient_id)
+                        except:
+                            return JsonResponse({"message": "patient_id not exist"})
+                    else:
+                        user = request.user
+                else:
+                    user = request.user
+
+                endpoint_url = 'https://wbsapi.withings.net/measure'
+
+                headers = {
+                    'Authorization': f'Bearer {user.user_profile.access_token}'
                 }
+
+                if str(date_from) == '0' and str(date_to) == '0':
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "88",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                    }
+                else:
+                    data = {
+                        "action": "getmeas",
+                        "meastype": "88",
+                        "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+                        "startdate": date_from,
+                        "enddate": date_to,
+                    }
+
                 try:
                     response = requests.get(endpoint_url, headers=headers, data=data)
                     if response.status_code == 200:
@@ -386,21 +504,59 @@ def withings_fetch_bone_mass_view(request):
         return JsonResponse({"message": "login required"})
 
 
-def ajax_fetch_weight_log_from_fitbit(request):
+def fitbit_fetch_weight_view(request):
     context = {}
     if request.user.is_authenticated:
         user_profile = request.user.user_profile
         if fitbit_has_user_token(request.user):
             if fitbit_has_user_active_token(request.user):
-                date = fetch_data_from_http_post(request, 'date', context)
-                if not date:
-                    date = datetime.datetime.now()
-                else:
-                    date = str(date).split('-')
-                    date = datetime.datetime(year=int(date[0]), month=int(date[1]), day=int(date[2]))
-                date = date.strftime("%Y-%m-%d")
-                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/body/log/weight/date/{date}.json'
+                date_from = fetch_data_from_http_post(request, 'date_from', context)
+                date_to = fetch_data_from_http_post(request, 'date_to', context)
 
+                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/body/log/weight/date/{date_from}/{date_to}.json'
+
+                headers = {
+                    'Authorization': f'Bearer {user_profile.fitbit_access_token}'
+                }
+
+                try:
+                    response = requests.get(endpoint_url, headers=headers)
+                    if response.status_code == 200:
+                        data = response.json()
+                        return JsonResponse(data)
+                    else:
+                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
+                except Exception as e:
+                    return JsonResponse({"message": f"exception happens. err: {e}"})
+            else:
+                return JsonResponse({"message": "fitbit_has_user_active_token false"})
+        else:
+            return JsonResponse({"message": "fitbit_has_user_token - false"})
+    else:
+        return JsonResponse({"message": "login required"})
+
+
+def fitbit_fetch_sleep_view(request):
+    context = {}
+    if request.user.is_authenticated:
+        if request.user.is_superuser:
+            patient_id = fetch_data_from_http_post(request, 'patient_id', context)
+            if patient_id:
+                try:
+                    user = User.objects.get(id=patient_id)
+                except:
+                    return JsonResponse({"message": "patient_id not exist"})
+            else:
+                user = request.user
+        else:
+            user = request.user
+
+        user_profile = user.user_profile
+        if fitbit_has_user_token(user):
+            if fitbit_has_user_active_token(user):
+                date_from = fetch_data_from_http_post(request, 'date_from', context)
+                date_to = fetch_data_from_http_post(request, 'date_to', context)
+                endpoint_url = f'https://api.fitbit.com/1.2/user/{user_profile.fitbit_userid}/sleep/{date_from}/{date_to}/.json'
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
                 }
@@ -423,56 +579,7 @@ def ajax_fetch_weight_log_from_fitbit(request):
         return JsonResponse({"message": "login required"})
 
 
-def ajax_fetch_sleep_log_from_fitbit(request):
-    context = {}
-    if request.user.is_authenticated:
-        if request.user.is_superuser:
-            patient_id = fetch_data_from_http_post(request, 'patient_id', context)
-            if patient_id:
-                try:
-                    user = User.objects.get(id=patient_id)
-                except:
-                    return JsonResponse({"message": "patient_id not exist"})
-            else:
-                user = request.user
-        else:
-            user = request.user
-
-        user_profile = user.user_profile
-        if fitbit_has_user_token(user):
-            if fitbit_has_user_active_token(user):
-                sleep_date = fetch_data_from_http_post(request, 'sleep_date', context)
-                if not sleep_date:
-                    date = datetime.datetime.now()
-                else:
-                    date = str(sleep_date).split('-')
-                    date = datetime.datetime(year=int(date[0]), month=int(date[1]), day=int(date[2]))
-                date = date.strftime("%Y-%m-%d")
-                endpoint_url = f'https://api.fitbit.com/1.2/user/{user_profile.fitbit_userid}/sleep/date/{date}.json'
-
-                headers = {
-                    'Authorization': f'Bearer {user_profile.fitbit_access_token}'
-                }
-
-                try:
-                    response = requests.get(endpoint_url, headers=headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        custom_log(str(data))
-                        return JsonResponse(data)
-                    else:
-                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
-                except Exception as e:
-                    return JsonResponse({"message": f"exception happens. err: {e}"})
-            else:
-                return JsonResponse({"message": "fitbit_has_user_active_token false"})
-        else:
-            return JsonResponse({"message": "fitbit_has_user_token - false"})
-    else:
-        return JsonResponse({"message": "login required"})
-
-
-def ajax_get_spO2_summary_by_date_from_fitbit(request):
+def fitbit_fetch_spO2_view(request):
     context = {}
     if request.user.is_authenticated:
         if request.user.is_superuser:
@@ -489,24 +596,10 @@ def ajax_get_spO2_summary_by_date_from_fitbit(request):
         user_profile = user.user_profile
         if fitbit_has_user_token(user):
             if fitbit_has_user_active_token(user):
-                start_date = fetch_data_from_http_post(request, 'start_date', context)
-                end_date = fetch_data_from_http_post(request, 'end_date', context)
-                if not start_date:
-                    start_date = datetime.datetime.now()
-                else:
-                    start_date = str(start_date).split('-')
-                    start_date = datetime.datetime(year=int(start_date[0]), month=int(start_date[1]),
-                                                   day=int(start_date[2]))
-                if not end_date:
-                    end_date = datetime.datetime.now()
-                else:
-                    end_date = str(end_date).split('-')
-                    end_date = datetime.datetime(year=int(end_date[0]), month=int(end_date[1]), day=int(end_date[2]))
-                start_date = start_date.strftime("%Y-%m-%d")
-                end_date = end_date.strftime("%Y-%m-%d")
-                custom_log(start_date)
-                custom_log(end_date)
-                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/spo2/date/{start_date}/{end_date}.json'
+                date_from = fetch_data_from_http_post(request, 'date_from', context)
+                date_to = fetch_data_from_http_post(request, 'date_to', context)
+
+                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/spo2/date/{date_from}/{date_to}.json'
 
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
@@ -516,14 +609,13 @@ def ajax_get_spO2_summary_by_date_from_fitbit(request):
                     response = requests.get(endpoint_url, headers=headers)
                     if response.status_code == 200:
                         data = response.json()
-                        custom_log(str(data))
                         return JsonResponse(data, safe=False)
                     else:
                         return JsonResponse({
-                                                "message": f"ajax_get_spO2_summary_by_date_from_fitbit response.status_code == {response.status_code}"})
+                                                "message": f"response.status_code == {response.status_code}"})
                 except Exception as e:
                     return JsonResponse(
-                        {"message": f"ajax_get_spO2_summary_by_date_from_fitbit exception happens. err: {e}"})
+                        {"message": f"exception happens. err: {e}"})
             else:
                 return JsonResponse({"message": "fitbit_has_user_active_token false"})
         else:
@@ -532,25 +624,16 @@ def ajax_get_spO2_summary_by_date_from_fitbit(request):
         return JsonResponse({"message": "login required"})
 
 
-def ajax_get_heart_rate_time_series_by_date_from_fitbit(request):
+def fitbit_fetch_heart_rate_view(request):
     context = {}
     if request.user.is_authenticated:
         user_profile = request.user.user_profile
         if fitbit_has_user_token(request.user):
             if fitbit_has_user_active_token(request.user):
-                date = fetch_data_from_http_post(request, 'date', context)
-                period = fetch_data_from_http_post(request, 'period', context)
-                if not date:
-                    date = datetime.datetime.now()
-                else:
-                    date = str(date).split('-')
-                    date = datetime.datetime(year=int(date[0]), month=int(date[1]), day=int(date[2]))
-                date = date.strftime("%Y-%m-%d")
+                date_from = fetch_data_from_http_post(request, 'date_from', context)
+                date_to = fetch_data_from_http_post(request, 'date_to', context)
 
-                if not period:
-                    period = '1d'
-
-                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/activities/heart/date/{date}/{period}.json'
+                endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/activities/heart/date/{date_from}/{date_to}.json'
 
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
@@ -560,14 +643,12 @@ def ajax_get_heart_rate_time_series_by_date_from_fitbit(request):
                     response = requests.get(endpoint_url, headers=headers)
                     if response.status_code == 200:
                         data = response.json()
-                        custom_log(str(data))
                         return JsonResponse(data)
                     else:
-                        return JsonResponse({
-                                                "message": f"ajax_get_spO2_summary_by_date_from_fitbit response.status_code == {response.status_code}"})
+                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
                 except Exception as e:
                     return JsonResponse(
-                        {"message": f"ajax_get_spO2_summary_by_date_from_fitbit exception happens. err: {e}"})
+                        {"message": f"exception happens. err: {e}"})
             else:
                 return JsonResponse({"message": "fitbit_has_user_active_token false"})
         else:
@@ -604,6 +685,30 @@ def witings_token_is_active(user):
         return False
 
 
+def fitbit_token_is_active(user):
+    endpoint_url = f'https://api.fitbit.com/1/user/{user.user_profile.fitbit_userid}/body/log/weight/date/2024-03-23.json'
+
+    headers = {
+        'Authorization': f'Bearer {user.user_profile.fitbit_access_token}'
+    }
+
+    try:
+        response = requests.get(endpoint_url, headers=headers)
+        if response.status_code == 200:
+            return True
+        elif response.status_code == 429:
+            return False
+        elif response.status_code == 401:
+            profile = user.user_profile
+            profile.fitbit_access_token = None
+            profile.save()
+            return False
+        else:
+            return False
+    except Exception as e:
+        return False
+
+
 def get_date_range_strf_time(date_range):
     now = datetime.now()
     if date_range == 'today':
@@ -620,12 +725,16 @@ def get_date_range_strf_time(date_range):
         last_day_of_month = datetime(now.year, now.month + 1, 1) - timedelta(days=1)
         datetime_to = datetime(last_day_of_month.year, last_day_of_month.month, last_day_of_month.day, 23, 59, 59)
     else:
-        # Default to today
-        datetime_from = datetime(now.year, now.month, now.day, 0, 0, 0)
-        datetime_to = datetime(now.year, now.month, now.day, 23, 59, 59)
+        # Default to all time
+        datetime_from = 0
+        datetime_to = 0
 
-    datetime_from_str = datetime_from.strftime('%Y-%m-%d')
-    datetime_to_str = datetime_to.strftime('%Y-%m-%d')
+    try:
+        datetime_from_str = datetime_from.strftime('%Y-%m-%d')
+        datetime_to_str = datetime_to.strftime('%Y-%m-%d')
+    except:
+        datetime_from_str = 0
+        datetime_to_str = 0
 
     return datetime_from_str, datetime_to_str
 
@@ -646,11 +755,15 @@ def get_date_range_timestamp(date_range):
         last_day_of_month = datetime(now.year, now.month + 1, 1) - timedelta(days=1)
         datetime_to = datetime(last_day_of_month.year, last_day_of_month.month, last_day_of_month.day, 23, 59, 59)
     else:
-        # Default to today
-        datetime_from = datetime(now.year, now.month, now.day, 0, 0, 0)
-        datetime_to = datetime(now.year, now.month, now.day, 23, 59, 59)
+        # Default to all time
+        datetime_from = 0
+        datetime_to = 0
 
-    datetime_from_ts = int(datetime_from.timestamp())
-    datetime_to_ts = int(datetime_to.timestamp())
+    try:
+        datetime_from_ts = int(datetime_from.timestamp())
+        datetime_to_ts = int(datetime_to.timestamp())
+    except:
+        datetime_from_ts = 0
+        datetime_to_ts = 0
 
     return datetime_from_ts, datetime_to_ts

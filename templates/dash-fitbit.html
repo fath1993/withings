@@ -1,136 +1,416 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
+{% endblock %}
+
 {% block main %}
-<div class="container">
-
-<div class="page-header">
-    <h1>Bootstrap Charts <small>Bootstrap template, demonstrating a set of JavaScript Charts</small></h1>
-</div>
-
-<!-- Bootstrap Charts - START -->
-<div class="container">
-    <div class="row">
-        <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3>Line Series</h3>
+    <div class="container">
+        <div id="loader" class="loader"></div>
+        <div id="fitbit-main-container" hidden>
+            <!-- Bootstrap Charts - START -->
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Weight ({{ weight_range_default }})</h3>
+                            </div>
+                            <div id="chart_weight" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="panel-body">
-                    <div id="chart1"></div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Sleep ({{ sleep_range_default }})</h3>
+                            </div>
+                            <div id="chart_sleep" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3>Polar Series</h3>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Spo2 ({{ spo2_range_default }})</h3>
+                            </div>
+                            <div id="chart_spo2" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="chart2" class="panel-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>Heart Rate ({{ heart_rate_range_default }})</h3>
+                            </div>
+                            <div id="chart_heart_rate" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="row">
-        <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3>Area Series</h3>
-                </div>
-                <div class="panel-body">
-                    <div id="chart3"></div>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="panel panel-default">
-                <div class="panel-heading">
-                    <h3>StepLine Series</h3>
-                </div>
-                <div id="chart4" class="panel-body">
-                </div>
-            </div>
-        </div>
-    </div>   
-</div>
+{% endblock %}
 
-<!-- you need to include the shieldui css and js assets in order for the charts to work -->
-<link rel="stylesheet" type="text/css" href="http://www.shieldui.com/shared/components/latest/css/light-bootstrap/all.min.css" />
-<script type="text/javascript" src="http://www.shieldui.com/shared/components/latest/js/shieldui-all.min.js"></script>
+{% block extra_body %}
+    <!-- you need to include the shieldui css and js assets in order for the charts to work -->
+    <link rel="stylesheet" type="text/css"
+          href="{% static 'assets/css/light_bootstrap_all.min.css' %}"/>
+    <script type="text/javascript"
+            src="{% static 'assets/js/shieldui_all.min.js' %}"></script>
 
-<script type="text/javascript">
-    jQuery(function ($) {
-        var data1 = [12, 3, 4, 2, 12, 3, 4, 17, 22, 34, 54, 67];
-        var data2 = [3, 9, 12, 14, 22, 32, 45, 12, 67, 45, 55, 7];
-        var data3 = [23, 19, 11, 134, 242, 352, 435, 22, 637, 445, 555, 57];
-        var data4 = [13, 19, 112, 114, 212, 332, 435, 132, 67, 45, 55, 7];
+    <script>
+        // Function to show loader
+        function showLoader() {
+            document.getElementById("loader").style.display = 'block';
+        }
+
+        // Function to hide loader
+        function hideLoader() {
+            document.getElementById("loader").hidden = true;
+            document.getElementById("fitbit-main-container").hidden = false;
+        }
+
+        function fetchDataAndRenderChart() {
+            // Count to track the number of fetch requests completed
+            let fetchCount = 0;
             
-        $("#chart1").shieldChart({
-            exportOptions: {
-                image: false,
-                print: false
-            },
-            axisY: {
-                title: {
-                    text: "Break-Down for selected quarter"
-                }
-            },
-            dataSeries: [{
-                seriesType: "line",
-                data: data1
-            }]
-        });
+            const dataArray = {}
 
-        $("#chart2").shieldChart({
-            exportOptions: {
-                image: false,
-                print: false
-            },
-            axisY: {
-                title: {
-                    text: "Break-Down for selected quarter"
+            // Callback function to render chart once all fetch requests are completed
+            function hide_loader_and_render_all_charts() {
+                fetchCount++;
+                if (fetchCount === 3) {
+                    var chart_data_weight = setInterval(() => {
+                        if (dataArray['fitbit_fetch_weight'] !== null && dataArray['fitbit_fetch_sleep'] !== null && dataArray['fitbit_fetch_spo2'] !== null && dataArray['fitbit_fetch_heart_rate'] !== null){
+                            clearInterval(chart_data_weight);
+                            renderCharts(dataArray)
+                            hideLoader();
+                        }
+                    }, 1000)
                 }
-            },
-            dataSeries: [{
-                seriesType: "polarbar",
-                data: data2
-            }]
-        });
+            }
 
-        $("#chart3").shieldChart({
-            exportOptions: {
-                image: false,
-                print: false
-            },
-            axisY: {
-                title: {
-                    text: "Break-Down for selected quarter"
+            function fitbit_fetch_weight() {
+                const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
+                formData.append('date_from', "{{ weight_range.0 }}")
+                formData.append('date_to', "{{ weight_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
                 }
-            },
-            dataSeries: [{
-                seriesType: "area",
-                data: data3
-            }]
-        });
-
-        $("#chart4").shieldChart({
-            exportOptions: {
-                image: false,
-                print: false
-            },
-            axisY: {
-                title: {
-                    text: "Break-Down for selected quarter"
+                fetch('{% url 'website:fitbit-fetch-weight' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        dataArray['fitbit_fetch_weight'] = data
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['fitbit_fetch_weight'] = 'fetch_but_null'
+                        console.error('Error fetching data from fitbit-fetch-weight:', error);
+                        document.getElementById('chart_weight').innerText = 'No Data'
+                    });
+            }
+            
+            function fitbit_fetch_sleep() {
+                const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
+                formData.append('date_from', "{{ fat_free_mass_range.0 }}")
+                formData.append('date_to', "{{ fat_free_mass_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
                 }
-            },
-            dataSeries: [{
-                seriesType: "stepline",
-                data: data4
-            }]
-        });
-    });
-</script>
-<!-- Bootstrap Charts - END -->
+                fetch('{% url 'website:fitbit-fetch-sleep' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        
+                        dataArray['fitbit_fetch_sleep'] = data
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['fitbit_fetch_sleep'] = 'fetch_but_null'
+                        console.error('Error fetching data from fitbit-fetch-sleep:', error);
+                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
+                    });
+            }
+            
+            function fitbit_fetch_spo2() {
+                const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
+                formData.append('date_from', "{{ fat_ratio_range.0 }}")
+                formData.append('date_to', "{{ fat_ratio_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:fitbit-fetch-spO2' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        dataArray['fitbit_fetch_spO2'] = data
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['fitbit_fetch_spO2'] = 'fetch_but_null'
+                        console.error('Error fetching data from fitbit-fetch-spO2:', error);
+                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
+                    });
+            }
+            
+            function fitbit_fetch_heart_rate() {
+                const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
+                formData.append('date_from', "{{ fat_mass_weight_range.0 }}")
+                formData.append('date_to', "{{ fat_mass_weight_range.1 }}")
+                formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+                const options = {
+                    method: 'POST',
+                    body: formData,
+                }
+                fetch('{% url 'website:fitbit-fetch-heart-rate' %}', options)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        dataArray['fitbit_fetch_heart_rate'] = data
+                        hide_loader_and_render_all_charts()
+                    })
+                    .catch(error => {
+                        dataArray['fitbit_fetch_heart_rate'] = 'fetch_but_null'
+                        console.error('Error fetching data from fitbit-fetch-heart-rate:', error);
+                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
+                    });
+            }
+            
+            fitbit_fetch_weight()
+            fitbit_fetch_sleep()
+            fitbit_fetch_spo2()
+            fitbit_fetch_heart_rate()
 
-</div>    
+            function renderCharts(dataArray) {
+                const data1 = dataArray['fitbit_fetch_weight']
+                const data2 = dataArray['fitbit_fetch_sleep']
+                const data3 = dataArray['fitbit_fetch_spo2']
+                const data4 = dataArray['fitbit_fetch_heart_rate']
+                console.log(data1)
+                console.log(data2)
+                console.log(data3)
+                console.log(data4)
+                jQuery(function ($) {
+                    try {
+                        $("#chart_weight").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function(text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data1.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Weight (Kg)"
+                                }
+                            },
+                            dataSeries: [{
+                                collectionAlias: "weight",
+                                seriesType: "line",
+                                data: data1
+                            }]
+                        });
+                    } catch (err){
+                        console.log('renderWeightChart err: ' + err)
+                        document.getElementById('chart_weight').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_sleep").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function(text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data2.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Fat Free Mass (Kg)"
+                                }
+                            },
+                            dataSeries: [{
+                                collectionAlias: "fat free mass",
+                                seriesType: "line",
+                                data: data2
+                            }]
+                        });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_spo2").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data3.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Fat Ratio (%)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "fat ratio",
+                            seriesType: "line",
+                            data: data3
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_heart_rate").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date (day of month)"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 3,
+                                textAngle: 0,
+                                format: function(text, axis, chart) {
+                                    return text.match(/day: (\d+)/)[1];
+                                }
+                            },
+                            categoricalValues: data4.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Fat Mass Weight (Kg)"
+                            }
+                        },
+                        dataSeries: [{
+                            collectionAlias: "fat mass weight",
+                            seriesType: "line",
+                            data: data4
+                        }]
+                    });
+                    } catch (err){
+                        console.log(err)
+                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
+                    }
+                });
+                hideDemoTspans()
+            }
+        }
+        
+        function isOutlier(number, numbers) {
+            // Calculate the mean of the numbers
+            const mean = numbers.reduce((acc, val) => acc + val, 0) / numbers.length;
+        
+            // Calculate the standard deviation
+            const stdDev = Math.sqrt(numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length);
+        
+            // Check if the number is an outlier
+            return (number < (mean - 2 * stdDev) || number > (mean + 2 * stdDev));
+        }
+        
+        function hideDemoTspans() {
+            var demo_cleaner = setInterval(() => {
+                const tspans = document.querySelectorAll('tspan');
+                if (tspans.length > 0) {
+                    tspans.forEach(tspan => {
+                        if (tspan.textContent.trim() === 'Demo Version') {
+                            tspan.style.display = 'none';
+                        }
+                    });
+                    tspans.forEach(tspan => {
+                        if (tspan.textContent.trim() === 'Shield UI Chart') {
+                            tspan.style.display = 'none';
+                        }
+                    });
+                    const exportButtons = document.querySelectorAll('.shield-export-button-img');
+                    exportButtons.forEach(exportButton => {
+                        exportButton.innerHTML += '<i class="fa fa-download"></i>';
+                    });
+                    
+                    clearInterval(demo_cleaner);
+                }
+            }, 1000)
+        }
+
+        $(document).ready(function() {
+            showLoader();
+            fetchDataAndRenderChart();
+        })
+
+    </script>
 {% endblock %}

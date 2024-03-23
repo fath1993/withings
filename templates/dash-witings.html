@@ -15,7 +15,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Weight</h3>
+                                <h3>Weight ({{ weight_range_default }})</h3>
                             </div>
                             <div id="chart_weight" class="panel-body">
                             </div>
@@ -26,7 +26,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Fat Free Mass</h3>
+                                <h3>Fat Free Mass ({{ fat_free_mass_range_default }})</h3>
                             </div>
                             <div id="chart_fat_free_mass" class="panel-body">
                             </div>
@@ -37,7 +37,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Fat Ratio</h3>
+                                <h3>Fat Ratio ({{ fat_ratio_range_default }})</h3>
                             </div>
                             <div id="chart_fat_ratio" class="panel-body">
                             </div>
@@ -48,7 +48,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Fat Mass Weight</h3>
+                                <h3>Fat Mass Weight ({{ fat_mass_weight_range_default }})</h3>
                             </div>
                             <div id="chart_fat_mass_weight" class="panel-body">
                             </div>
@@ -59,7 +59,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Muscle Mass</h3>
+                                <h3>Muscle Mass ({{ muscle_mass_range_default }})</h3>
                             </div>
                             <div id="chart_muscle_mass" class="panel-body">
                             </div>
@@ -70,7 +70,7 @@
                     <div class="col-md-12">
                         <div class="panel panel-default">
                             <div class="panel-heading">
-                                <h3>Bone Mass</h3>
+                                <h3>Bone Mass ({{ bone_mass_range_default }})</h3>
                             </div>
                             <div id="chart_bone_mass" class="panel-body">
                             </div>
@@ -123,6 +123,7 @@
 
             function withings_fetch_weight() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ weight_range.0 }}")
                 formData.append('date_to', "{{ weight_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
@@ -171,6 +172,7 @@
             
             function withings_fetch_fat_free_mass() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ fat_free_mass_range.0 }}")
                 formData.append('date_to', "{{ fat_free_mass_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
@@ -219,6 +221,7 @@
             
             function withings_fetch_fat_ratio() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ fat_ratio_range.0 }}")
                 formData.append('date_to', "{{ fat_ratio_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
@@ -267,6 +270,7 @@
             
             function withings_fetch_fat_mass_weight() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ fat_mass_weight_range.0 }}")
                 formData.append('date_to', "{{ fat_mass_weight_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
@@ -315,6 +319,7 @@
             
             function withings_fetch_muscle_mass() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ muscle_mass_range.0 }}")
                 formData.append('date_to', "{{ muscle_mass_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
@@ -363,6 +368,7 @@
             
             function withings_fetch_bone_mass() {
                 const formData = new FormData();
+                formData.append('patient_id', "{{ patient_id }}")
                 formData.append('date_from', "{{ bone_mass_range.0 }}")
                 formData.append('date_to', "{{ bone_mass_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')

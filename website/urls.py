@@ -1,9 +1,10 @@
 from django.urls import path
-from website.views import landing_view, filter_view, ajax_fetch_weight_log_from_fitbit, \
-    ajax_fetch_sleep_log_from_fitbit, fitbit_dash_view, witings_dash_view, ajax_get_spO2_summary_by_date_from_fitbit, \
-    ajax_get_heart_rate_time_series_by_date_from_fitbit, withings_fetch_weight_view, withings_fetch_fat_free_mass_view, \
+from website.views import landing_view, filter_view, \
+    fitbit_dash_view, witings_dash_view, \
+    withings_fetch_weight_view, withings_fetch_fat_free_mass_view, \
     withings_fetch_fat_ratio_view, withings_fetch_fat_mass_weight_view, withings_fetch_muscle_mass_view, \
-    withings_fetch_bone_mass_view
+    withings_fetch_bone_mass_view, fitbit_fetch_weight_view, fitbit_fetch_sleep_view, fitbit_fetch_spO2_view, \
+    fitbit_fetch_heart_rate_view
 
 app_name = 'website'
 
@@ -26,12 +27,11 @@ urlpatterns = (
     path('withings-fetch-bone-mass/', withings_fetch_bone_mass_view,
          name='withings-fetch-bone-mass'),
 
-    # Ajax Fitbit
-    path('ajax/ajax-fetch-weight-log-from-fitbit/', ajax_fetch_weight_log_from_fitbit, name='ajax/ajax-fetch-weight-log-from-fitbit'),
-    path('ajax/ajax-fetch-sleep-log-from-fitbit/', ajax_fetch_sleep_log_from_fitbit, name='ajax/ajax-fetch-sleep-log-from-fitbit'),
-    path('ajax/ajax-get-spO2-summary-by-date-from-fitbit/', ajax_get_spO2_summary_by_date_from_fitbit, name='ajax-get-spO2-summary-by-date-from-fitbit'),
-    path('ajax/ajax-get-heart-rate-time-series-by-date-from-fitbit/', ajax_get_heart_rate_time_series_by_date_from_fitbit,
-         name='ajax-get-heart-rate-time-series-by-date-from-fitbit'),
+    # Fitbit
+    path('fitbit-fetch-weight/', fitbit_fetch_weight_view, name='fitbit-fetch-weight'),
+    path('fitbit-fetch-sleep/', fitbit_fetch_sleep_view, name='fitbit-fetch-sleep'),
+    path('fitbit-fetch-spO2/', fitbit_fetch_spO2_view, name='fitbit-fetch-spO2'),
+    path('fitbit-fetch-heart-rate/', fitbit_fetch_heart_rate_view, name='fitbit-fetch-heart-rate'),
 )
 
 
