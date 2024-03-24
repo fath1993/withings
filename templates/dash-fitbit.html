@@ -82,15 +82,15 @@
         function fetchDataAndRenderChart() {
             // Count to track the number of fetch requests completed
             let fetchCount = 0;
-            
+
             const dataArray = {}
 
             // Callback function to render chart once all fetch requests are completed
             function hide_loader_and_render_all_charts() {
                 fetchCount++;
-                if (fetchCount === 3) {
+                if (fetchCount === 2) {
                     var chart_data_weight = setInterval(() => {
-                        if (dataArray['fitbit_fetch_weight'] !== null && dataArray['fitbit_fetch_sleep'] !== null && dataArray['fitbit_fetch_spo2'] !== null && dataArray['fitbit_fetch_heart_rate'] !== null){
+                        if (dataArray['fitbit_fetch_sleep'] !== null && dataArray['fitbit_fetch_spo2'] !== null && dataArray['fitbit_fetch_heart_rate'] !== null){
                             clearInterval(chart_data_weight);
                             renderCharts(dataArray)
                             hideLoader();
@@ -126,12 +126,12 @@
                         document.getElementById('chart_weight').innerText = 'No Data'
                     });
             }
-            
+
             function fitbit_fetch_sleep() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
-                formData.append('date_from', "{{ fat_free_mass_range.0 }}")
-                formData.append('date_to', "{{ fat_free_mass_range.1 }}")
+                formData.append('date_from', "{{ sleep_range.0 }}")
+                formData.append('date_to', "{{ sleep_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
                 const options = {
                     method: 'POST',
@@ -145,22 +145,50 @@
                         return response.json();
                     })
                     .then(data => {
-                        
-                        dataArray['fitbit_fetch_sleep'] = data
+                        const sleep_data = data['sleep']
+                        const fitbit_fetch_sleep = []
+                        sleep_data.forEach(obj => {
+                            const date_of_sleep = obj['dateOfSleep']
+                            let asleep_minutes
+                            let awake_minutes
+                            let restless_minutes
+                            try{
+                                asleep_minutes = obj['levels']['summary']['asleep']['minutes']
+                            } catch {
+                                asleep_minutes = obj['levels']['summary']['deep']['minutes']
+                            }
+                            try{
+                                awake_minutes = obj['levels']['summary']['awake']['minutes']
+                            } catch {
+                                awake_minutes = obj['levels']['summary']['wake']['minutes']
+                            }
+                            try{
+                                restless_minutes = obj['levels']['summary']['restless']['minutes']
+                            } catch {
+                                restless_minutes = obj['levels']['summary']['light']['minutes']
+                            }
+
+                            // Create an array for each sleep entry
+                            const resultArray = [date_of_sleep, asleep_minutes, awake_minutes, restless_minutes];
+                            
+                            // Push the result array to the results array
+                            fitbit_fetch_sleep.push(resultArray);
+                        });
+                        dataArray['fitbit_fetch_sleep'] = fitbit_fetch_sleep
                         hide_loader_and_render_all_charts()
                     })
                     .catch(error => {
                         dataArray['fitbit_fetch_sleep'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-sleep:', error);
-                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
+                        document.getElementById('chart_sleep').innerText = 'No Data'
                     });
             }
-            
+
             function fitbit_fetch_spo2() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
-                formData.append('date_from', "{{ fat_ratio_range.0 }}")
-                formData.append('date_to', "{{ fat_ratio_range.1 }}")
+                formData.append('date_from', "{{ spo2_range.0 }}")
+                formData.append('date_to', "{{ spo2_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
                 const options = {
                     method: 'POST',
@@ -174,21 +202,21 @@
                         return response.json();
                     })
                     .then(data => {
-                        dataArray['fitbit_fetch_spO2'] = data
+                        dataArray['fitbit_fetch_spo2'] = data
                         hide_loader_and_render_all_charts()
                     })
                     .catch(error => {
-                        dataArray['fitbit_fetch_spO2'] = 'fetch_but_null'
+                        dataArray['fitbit_fetch_spo2'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-spO2:', error);
-                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
+                        document.getElementById('chart_spo2').innerText = 'No Data'
                     });
             }
-            
+
             function fitbit_fetch_heart_rate() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
-                formData.append('date_from', "{{ fat_mass_weight_range.0 }}")
-                formData.append('date_to', "{{ fat_mass_weight_range.1 }}")
+                formData.append('date_from', "{{ heart_rate_range.0 }}")
+                formData.append('date_to', "{{ heart_rate_range.1 }}")
                 formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
                 const options = {
                     method: 'POST',
@@ -208,181 +236,41 @@
                     .catch(error => {
                         dataArray['fitbit_fetch_heart_rate'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-heart-rate:', error);
-                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
+                        document.getElementById('chart_heart_rate').innerText = 'No Data'
                     });
             }
-            
-            fitbit_fetch_weight()
+
+            {#fitbit_fetch_weight()#}
             fitbit_fetch_sleep()
             fitbit_fetch_spo2()
             fitbit_fetch_heart_rate()
 
             function renderCharts(dataArray) {
-                const data1 = dataArray['fitbit_fetch_weight']
-                const data2 = dataArray['fitbit_fetch_sleep']
-                const data3 = dataArray['fitbit_fetch_spo2']
-                const data4 = dataArray['fitbit_fetch_heart_rate']
-                console.log(data1)
+                console.log(dataArray)
+                {#const data1 = dataArray['fitbit_fetch_weight']#}
+                const data2 = dataArray.fitbit_fetch_sleep
+                const data3 = dataArray.fitbit_fetch_spo2
+                const data4 = dataArray.fitbit_fetch_heart_rate
+                {#console.log(data1)#}
                 console.log(data2)
                 console.log(data3)
                 console.log(data4)
-                jQuery(function ($) {
-                    try {
-                        $("#chart_weight").shieldChart({
-                            exportOptions: {
-                                image: true,
-                                print: false
-                            },
-                            axisX: {
-                                title: {
-                                    text: "Date (day of month)"
-                                },
-                                axisTickText: {
-                                    enabled: true,
-                                    step: 3,
-                                    textAngle: 0,
-                                    format: function(text, axis, chart) {
-                                        return text.match(/day: (\d+)/)[1];
-                                    }
-                                },
-                                categoricalValues: data1.map(item => item[0]),
-                            },
-                            axisY: {
-                                title: {
-                                    text: "Weight (Kg)"
-                                }
-                            },
-                            dataSeries: [{
-                                collectionAlias: "weight",
-                                seriesType: "line",
-                                data: data1
-                            }]
-                        });
-                    } catch (err){
-                        console.log('renderWeightChart err: ' + err)
-                        document.getElementById('chart_weight').innerText = 'No Data'
-                    }
-                    try {
-                        $("#chart_sleep").shieldChart({
-                            exportOptions: {
-                                image: true,
-                                print: false
-                            },
-                            axisX: {
-                                title: {
-                                    text: "Date (day of month)"
-                                },
-                                axisTickText: {
-                                    enabled: true,
-                                    step: 3,
-                                    textAngle: 0,
-                                    format: function(text, axis, chart) {
-                                        return text.match(/day: (\d+)/)[1];
-                                    }
-                                },
-                                categoricalValues: data2.map(item => item[0]),
-                            },
-                            axisY: {
-                                title: {
-                                    text: "Fat Free Mass (Kg)"
-                                }
-                            },
-                            dataSeries: [{
-                                collectionAlias: "fat free mass",
-                                seriesType: "line",
-                                data: data2
-                            }]
-                        });
-                    } catch (err){
-                        console.log(err)
-                        document.getElementById('chart_fat_free_mass').innerText = 'No Data'
-                    }
-                    try {
-                        $("#chart_spo2").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
-                            },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
-                                }
-                            },
-                            categoricalValues: data3.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Fat Ratio (%)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "fat ratio",
-                            seriesType: "line",
-                            data: data3
-                        }]
-                    });
-                    } catch (err){
-                        console.log(err)
-                        document.getElementById('chart_fat_ratio').innerText = 'No Data'
-                    }
-                    try {
-                        $("#chart_heart_rate").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
-                            },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
-                                }
-                            },
-                            categoricalValues: data4.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Fat Mass Weight (Kg)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "fat mass weight",
-                            seriesType: "line",
-                            data: data4
-                        }]
-                    });
-                    } catch (err){
-                        console.log(err)
-                        document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
-                    }
-                });
+
                 hideDemoTspans()
             }
         }
-        
+
         function isOutlier(number, numbers) {
             // Calculate the mean of the numbers
             const mean = numbers.reduce((acc, val) => acc + val, 0) / numbers.length;
-        
+
             // Calculate the standard deviation
             const stdDev = Math.sqrt(numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length);
-        
+
             // Check if the number is an outlier
             return (number < (mean - 2 * stdDev) || number > (mean + 2 * stdDev));
         }
-        
+
         function hideDemoTspans() {
             var demo_cleaner = setInterval(() => {
                 const tspans = document.querySelectorAll('tspan');
@@ -401,7 +289,7 @@
                     exportButtons.forEach(exportButton => {
                         exportButton.innerHTML += '<i class="fa fa-download"></i>';
                     });
-                    
+
                     clearInterval(demo_cleaner);
                 }
             }, 1000)

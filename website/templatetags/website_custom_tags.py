@@ -17,7 +17,7 @@ def has_user_active_token(user):
         else:
             return False
     except Exception as e:
-        print(str(e))
+        print(f"has_user_active_token: {str(e)}")
         return False
 
 
@@ -29,7 +29,7 @@ def has_user_token(user):
         else:
             return False
     except Exception as e:
-        print(str(e))
+        print(f"has_user_token: {str(e)}")
         return False
 
 
@@ -44,7 +44,7 @@ def fitbit_has_user_active_token(user):
         else:
             return False
     except Exception as e:
-        print(str(e))
+        print(f"fitbit_has_user_active_token: {str(e)}")
         return False
 
 
@@ -56,5 +56,5 @@ def fitbit_has_user_token(user):
         else:
             return False
     except Exception as e:
-        print(str(e))
+        print(f"fitbit_has_user_token: {str(e)}")
         return False

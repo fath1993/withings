@@ -102,14 +102,14 @@ def fitbit_dash_view(request):
         if fitbit_has_user_token(request.user):
             if fitbit_has_user_active_token(request.user):
                 context['patient_id'] = request.user.id
-                context['oxygen_range_default'] = 'all_time'
-                context['sleep_range_default'] = 'all_time'
-                context['spo2_range_default'] = 'all_time'
-                context['heart_rate_range_default'] = 'all_time'
-                context['oxygen_range'] = get_date_range_strf_time('all_time')
-                context['sleep_range'] = get_date_range_strf_time('all_time')
-                context['spo2_range'] = get_date_range_strf_time('all_time')
-                context['heart_rate_range'] = get_date_range_strf_time('all_time')
+                context['weight_range_default'] = 'all time'
+                context['sleep_range_default'] = 'all time'
+                context['spo2_range_default'] = 'all time'
+                context['heart_rate_range_default'] = 'all time'
+                context['weight_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
+                context['sleep_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
+                context['spo2_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
+                context['heart_rate_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
                 return render(request, 'dash-fitbit.html', context)
             else:
                 context['error'] = 'fitbit_has_user_active_token false'
@@ -550,25 +550,21 @@ def fitbit_fetch_sleep_view(request):
                 user = request.user
         else:
             user = request.user
-
         user_profile = user.user_profile
         if fitbit_has_user_token(user):
             if fitbit_has_user_active_token(user):
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
-                endpoint_url = f'https://api.fitbit.com/1.2/user/{user_profile.fitbit_userid}/sleep/{date_from}/{date_to}/.json'
+                endpoint_url = f'https://api.fitbit.com/1.2/user/{user_profile.fitbit_userid}/sleep/date/{date_from}/{date_to}.json'
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
                 }
 
                 try:
                     response = requests.get(endpoint_url, headers=headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        custom_log(str(data))
-                        return JsonResponse(data)
-                    else:
-                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
+                    data = response.json()
+                    custom_log(f"fitbit_fetch_sleep_view: {str(data)}")
+                    return JsonResponse(data, safe=False)
                 except Exception as e:
                     return JsonResponse({"message": f"exception happens. err: {e}"})
             else:
@@ -600,19 +596,15 @@ def fitbit_fetch_spO2_view(request):
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
                 endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/spo2/date/{date_from}/{date_to}.json'
-
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
                 }
 
                 try:
                     response = requests.get(endpoint_url, headers=headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        return JsonResponse(data, safe=False)
-                    else:
-                        return JsonResponse({
-                                                "message": f"response.status_code == {response.status_code}"})
+                    data = response.json()
+                    custom_log(f"fitbit_fetch_spO2_view: {str(data)}")
+                    return JsonResponse(data, safe=False)
                 except Exception as e:
                     return JsonResponse(
                         {"message": f"exception happens. err: {e}"})
@@ -634,18 +626,15 @@ def fitbit_fetch_heart_rate_view(request):
                 date_to = fetch_data_from_http_post(request, 'date_to', context)
 
                 endpoint_url = f'https://api.fitbit.com/1/user/{user_profile.fitbit_userid}/activities/heart/date/{date_from}/{date_to}.json'
-
                 headers = {
                     'Authorization': f'Bearer {user_profile.fitbit_access_token}'
                 }
 
                 try:
                     response = requests.get(endpoint_url, headers=headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        return JsonResponse(data)
-                    else:
-                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
+                    data = response.json()
+                    custom_log(f"fitbit_fetch_heart_rate_view: {str(data)}")
+                    return JsonResponse(data, safe=False)
                 except Exception as e:
                     return JsonResponse(
                         {"message": f"exception happens. err: {e}"})
@@ -726,15 +715,11 @@ def get_date_range_strf_time(date_range):
         datetime_to = datetime(last_day_of_month.year, last_day_of_month.month, last_day_of_month.day, 23, 59, 59)
     else:
         # Default to all time
-        datetime_from = 0
-        datetime_to = 0
+        datetime_from = datetime(year=2022, month=1, day=1, hour=0, minute=0)
+        datetime_to = datetime.now()
 
-    try:
-        datetime_from_str = datetime_from.strftime('%Y-%m-%d')
-        datetime_to_str = datetime_to.strftime('%Y-%m-%d')
-    except:
-        datetime_from_str = 0
-        datetime_to_str = 0
+    datetime_from_str = datetime_from.strftime('%Y-%m-%d')
+    datetime_to_str = datetime_to.strftime('%Y-%m-%d')
 
     return datetime_from_str, datetime_to_str
 
