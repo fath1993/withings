@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load account_custom_tag %}
 
 {% block extra_head %}
 <link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
@@ -11,6 +12,26 @@
         <div id="withings-main-container" hidden>
             <!-- Bootstrap Charts - START -->
             <div class="container">
+                <div class="row mb-5 mt-5">
+                    <div class="col-md-12">
+                        <table style="width: 100%; text-align: center; border: 2px solid black;">
+                            <tbody>
+                                <tr>
+                                    <th style="width:25%"><h2>First Name</h2></th>
+                                    <th style="width:25%"><h2>Last Name</h2></th>
+                                    <th style="width:25%"><h2>Sex</h2></th>
+                                    <th style="width:25%"><h2>Age</h2></th>
+                                </tr>
+                                <tr>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'first_name' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'last_name' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'sex' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'age' }}</h2></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">

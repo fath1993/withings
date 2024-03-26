@@ -106,7 +106,7 @@ def fitbit_dash_view(request):
                 context['sleep_range_default'] = 'all time'
                 context['spo2_range_default'] = 'all time'
                 context['heart_rate_range_default'] = 'all time'
-                context['weight_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
+                context['weight_range'] = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
                 context['sleep_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
                 context['spo2_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
                 context['heart_rate_range'] = (datetime.now() - timedelta(days=99)).strftime('%Y-%m-%d'), datetime.now().strftime('%Y-%m-%d')
@@ -507,7 +507,18 @@ def withings_fetch_bone_mass_view(request):
 def fitbit_fetch_weight_view(request):
     context = {}
     if request.user.is_authenticated:
-        user_profile = request.user.user_profile
+        if request.user.is_superuser:
+            patient_id = fetch_data_from_http_post(request, 'patient_id', context)
+            if patient_id:
+                try:
+                    user = User.objects.get(id=patient_id)
+                except:
+                    return JsonResponse({"message": "patient_id not exist"})
+            else:
+                user = request.user
+        else:
+            user = request.user
+        user_profile = user.user_profile
         if fitbit_has_user_token(request.user):
             if fitbit_has_user_active_token(request.user):
                 date_from = fetch_data_from_http_post(request, 'date_from', context)
@@ -521,11 +532,9 @@ def fitbit_fetch_weight_view(request):
 
                 try:
                     response = requests.get(endpoint_url, headers=headers)
-                    if response.status_code == 200:
-                        data = response.json()
-                        return JsonResponse(data)
-                    else:
-                        return JsonResponse({"message": f"response.status_code == {response.status_code}"})
+                    data = response.json()
+                    custom_log(f"fitbit_fetch_weight_view: {str(data)}")
+                    return JsonResponse(data, safe=False)
                 except Exception as e:
                     return JsonResponse({"message": f"exception happens. err: {e}"})
             else:

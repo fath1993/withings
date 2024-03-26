@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load account_custom_tag %}
 
 {% block extra_head %}
 <link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
@@ -11,17 +12,37 @@
         <div id="fitbit-main-container" hidden>
             <!-- Bootstrap Charts - START -->
             <div class="container">
-                <div class="row">
+                <div class="row mb-5 mt-5">
                     <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Weight ({{ weight_range_default }})</h3>
-                            </div>
-                            <div id="chart_weight" class="panel-body">
-                            </div>
-                        </div>
+                        <table style="width: 100%; text-align: center; border: 2px solid black;">
+                            <tbody>
+                                <tr>
+                                    <th style="width:25%"><h2>First Name</h2></th>
+                                    <th style="width:25%"><h2>Last Name</h2></th>
+                                    <th style="width:25%"><h2>Sex</h2></th>
+                                    <th style="width:25%"><h2>Age</h2></th>
+                                </tr>
+                                <tr>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'first_name' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'last_name' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'sex' }}</h2></td>
+                                    <td style="color: green"><h2>{{ patient_id|get_patient:'age' }}</h2></td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
+{#                <div class="row">#}
+{#                    <div class="col-md-12">#}
+{#                        <div class="panel panel-default">#}
+{#                            <div class="panel-heading">#}
+{#                                <h3>Weight ({{ weight_range_default }})</h3>#}
+{#                            </div>#}
+{#                            <div id="chart_weight" class="panel-body">#}
+{#                            </div>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
                 <div class="row">
                     <div class="col-md-12">
                         <div class="panel panel-default">
@@ -88,9 +109,9 @@
             // Callback function to render chart once all fetch requests are completed
             function hide_loader_and_render_all_charts() {
                 fetchCount++;
-                if (fetchCount === 2) {
+                if (fetchCount === 3) {
                     var chart_data_weight = setInterval(() => {
-                        if (dataArray['fitbit_fetch_sleep'] !== null && dataArray['fitbit_fetch_spo2'] !== null && dataArray['fitbit_fetch_heart_rate'] !== null){
+                        if (dataArray['fitbit_fetch_sleep_result'] !== null && dataArray['fitbit_fetch_spo2_result'] !== null && dataArray['fitbit_fetch_heart_rate_result'] !== null){
                             clearInterval(chart_data_weight);
                             renderCharts(dataArray)
                             hideLoader();
@@ -117,11 +138,13 @@
                         return response.json();
                     })
                     .then(data => {
-                        dataArray['fitbit_fetch_weight'] = data
+                        console.log(data)
+                        dataArray['fitbit_fetch_weight_result'] = data
                         hide_loader_and_render_all_charts()
                     })
                     .catch(error => {
-                        dataArray['fitbit_fetch_weight'] = 'fetch_but_null'
+                        dataArray['fitbit_fetch_weight_result'] = 'fetch_but_null'
+                        hide_loader_and_render_all_charts()
                         console.error('Error fetching data from fitbit-fetch-weight:', error);
                         document.getElementById('chart_weight').innerText = 'No Data'
                     });
@@ -142,11 +165,12 @@
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
+                        hide_loader_and_render_all_charts()
                         return response.json();
                     })
                     .then(data => {
                         const sleep_data = data['sleep']
-                        const fitbit_fetch_sleep = []
+                        const sleep_result = []
                         sleep_data.forEach(obj => {
                             const date_of_sleep = obj['dateOfSleep']
                             let asleep_minutes
@@ -155,30 +179,25 @@
                             try{
                                 asleep_minutes = obj['levels']['summary']['asleep']['minutes']
                             } catch {
-                                asleep_minutes = obj['levels']['summary']['deep']['minutes']
+                                asleep_minutes = 0
                             }
                             try{
                                 awake_minutes = obj['levels']['summary']['awake']['minutes']
                             } catch {
-                                awake_minutes = obj['levels']['summary']['wake']['minutes']
+                                awake_minutes = 0
                             }
                             try{
                                 restless_minutes = obj['levels']['summary']['restless']['minutes']
                             } catch {
-                                restless_minutes = obj['levels']['summary']['light']['minutes']
+                                restless_minutes = 0
                             }
-
-                            // Create an array for each sleep entry
-                            const resultArray = [date_of_sleep, asleep_minutes, awake_minutes, restless_minutes];
                             
-                            // Push the result array to the results array
-                            fitbit_fetch_sleep.push(resultArray);
+                            sleep_result.push([date_of_sleep, asleep_minutes, awake_minutes, restless_minutes]);
                         });
-                        dataArray['fitbit_fetch_sleep'] = fitbit_fetch_sleep
-                        hide_loader_and_render_all_charts()
+                        dataArray['fitbit_fetch_sleep_result'] = sleep_result
                     })
                     .catch(error => {
-                        dataArray['fitbit_fetch_sleep'] = 'fetch_but_null'
+                        dataArray['fitbit_fetch_sleep_result'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-sleep:', error);
                         document.getElementById('chart_sleep').innerText = 'No Data'
                     });
@@ -199,14 +218,39 @@
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
+                        hide_loader_and_render_all_charts()
                         return response.json();
                     })
                     .then(data => {
-                        dataArray['fitbit_fetch_spo2'] = data
-                        hide_loader_and_render_all_charts()
+                        const spo2_result = []
+                        data.forEach(obj => {
+                            const dateTime = obj['dateTime']
+                            let avg
+                            let min
+                            let max
+                            try{
+                                avg = obj['value']['avg']
+                            } catch {
+                                avg = 0
+                            }
+                            try{
+                                min = obj['value']['min']
+                            } catch {
+                                min = 0
+                            }
+                            try{
+                                max = obj['value']['max']
+                            } catch {
+                                max = 0
+                            }
+
+                            // Push the result array to the results array
+                            spo2_result.push([dateTime, avg, min, max]);
+                        });
+                        dataArray['fitbit_fetch_spo2_result'] = spo2_result
                     })
                     .catch(error => {
-                        dataArray['fitbit_fetch_spo2'] = 'fetch_but_null'
+                        dataArray['fitbit_fetch_spo2_result'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-spO2:', error);
                         document.getElementById('chart_spo2').innerText = 'No Data'
                     });
@@ -227,14 +271,44 @@
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
                         }
+                        hide_loader_and_render_all_charts()
                         return response.json();
                     })
                     .then(data => {
-                        dataArray['fitbit_fetch_heart_rate'] = data
-                        hide_loader_and_render_all_charts()
+                        const heart_rate_data = data['activities-heart']
+                        const heart_rate_result = []
+                        let zone_result
+                        let name
+                        let max
+                        let min
+                        heart_rate_data.forEach(obj => {
+                            const dateTime = obj['dateTime']
+                            const heartRateZones = obj['value']['heartRateZones']
+                            zone_result = []
+                            heartRateZones.forEach(zone => {
+                                try{
+                                    name = zone['name']
+                                } catch {
+                                    name = 0
+                                }
+                                try{
+                                    max = zone['max']
+                                } catch {
+                                    max = 0
+                                }
+                                try{
+                                    min = zone['min']
+                                } catch {
+                                    min = 0
+                                }
+                                zone_result.push([name, min, max])
+                            })
+                            heart_rate_result.push([dateTime, zone_result])
+                        });
+                        dataArray['fitbit_fetch_heart_rate_result'] = heart_rate_result
                     })
                     .catch(error => {
-                        dataArray['fitbit_fetch_heart_rate'] = 'fetch_but_null'
+                        dataArray['fitbit_fetch_heart_rate_result'] = 'fetch_but_null'
                         console.error('Error fetching data from fitbit-fetch-heart-rate:', error);
                         document.getElementById('chart_heart_rate').innerText = 'No Data'
                     });
@@ -246,15 +320,205 @@
             fitbit_fetch_heart_rate()
 
             function renderCharts(dataArray) {
-                console.log(dataArray)
-                {#const data1 = dataArray['fitbit_fetch_weight']#}
-                const data2 = dataArray.fitbit_fetch_sleep
-                const data3 = dataArray.fitbit_fetch_spo2
-                const data4 = dataArray.fitbit_fetch_heart_rate
+                {#const data1 = dataArray.fitbit_fetch_weight_result#}
+                const data2 = dataArray.fitbit_fetch_sleep_result
+                const data3 = dataArray.fitbit_fetch_spo2_result
+                const data4 = dataArray.fitbit_fetch_heart_rate_result
                 {#console.log(data1)#}
                 console.log(data2)
                 console.log(data3)
                 console.log(data4)
+                
+                jQuery(function ($) {
+                    try {
+                        $("#chart_sleep").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                },
+                                categoricalValues: data2.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Sleep State ( minute )"
+                                }
+                            },
+                            seriesSettings: {
+                                bar: {
+                                    stackMode: 'normal'
+                                }
+                            },
+                            dataSeries: [
+                                {
+                                    collectionAlias: "asleep",
+                                    stackIndex: 0,
+                                    data: data2.map(item => item[1]),
+                                },
+                                {
+                                    collectionAlias: "awake",
+                                    stackIndex: 1,
+                                    data: data2.map(item => item[2]),
+                                },
+                                {
+                                    collectionAlias: "restless",
+                                    stackIndex: 2,
+                                    data: data2.map(item => item[3]),
+                                },
+                            ]
+                        });
+                    } catch (err){
+                        console.log('render chart_sleep err: ' + err)
+                        document.getElementById('chart_sleep').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_spo2").shieldChart({
+                            exportOptions: {
+                                image: true,
+                                print: false
+                            },
+                            axisX: {
+                                title: {
+                                    text: "Date"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                },
+                                categoricalValues: data3.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "SpO2"
+                                }
+                            },
+                            seriesSettings: {
+                                bar: {
+                                    stackMode: 'normal'
+                                }
+                            },
+                            dataSeries: [
+                                {
+                                    collectionAlias: "avg",
+                                    stackIndex: 0,
+                                    data: data3.map(item => item[1]),
+                                },
+                                {
+                                    collectionAlias: "min",
+                                    stackIndex: 1,
+                                    data: data3.map(item => item[2]),
+                                },
+                                {
+                                    collectionAlias: "max",
+                                    stackIndex: 2,
+                                    data: data3.map(item => item[3]),
+                                },
+                            ]
+                        });
+                    } catch (err){
+                        console.log('render chart_spo2 err: ' + err)
+                        document.getElementById('chart_spo2').innerText = 'No Data'
+                    }
+                    try {
+                        $("#chart_heart_rate").shieldChart({
+                        exportOptions: {
+                            image: true,
+                            print: false
+                        },
+                        axisX: {
+                            title: {
+                                text: "Date"
+                            },
+                            axisTickText: {
+                                enabled: true,
+                                step: 20,
+                                textAngle: 0,
+                            },
+                            categoricalValues: data4.map(item => item[0]),
+                        },
+                        axisY: {
+                            title: {
+                                text: "Heart Rate"
+                            }
+                        },
+                        seriesSettings: {
+                            line: {
+                                enablePointSelection: true,
+                                pointMark: {
+                                    activeSettings: {
+                                        pointSelectedState: {
+                                            drawWidth: 4,
+                                            drawRadius: 4
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        dataSeries: [
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Out of Range min",
+                                stackIndex: 1,
+                                data: data4.map(item => item[1][0][1]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Out of Range max",
+                                stackIndex: 1,
+                                data: data4.map(item => item[1][0][2]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Fat Burn min",
+                                stackIndex: 2,
+                                data: data4.map(item => item[1][1][1]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Fat Burn max",
+                                stackIndex: 2,
+                                data: data4.map(item => item[1][1][2]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Cardio min",
+                                stackIndex: 3,
+                                data: data4.map(item => item[1][2][1]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Cardio max",
+                                stackIndex: 3,
+                                data: data4.map(item => item[1][2][2]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Peak min",
+                                stackIndex: 4,
+                                data: data4.map(item => item[1][3][1]),
+                            },
+                            {
+                                seriesType: 'line',
+                                collectionAlias: "Peak max",
+                                stackIndex: 4,
+                                data: data4.map(item => item[1][3][2]),
+                            },
+                        ]
+                    });
+                    } catch (err){
+                        console.log('render chart_heart_rate err: ' + err)
+                        document.getElementById('chart_heart_rate').innerText = 'No Data'
+                    }
+                });
 
                 hideDemoTspans()
             }
@@ -281,6 +545,11 @@
                         }
                     });
                     tspans.forEach(tspan => {
+                        if (tspan.textContent.trim() === 'Demo') {
+                            tspan.style.display = 'none';
+                        }
+                    });
+                    tspans.forEach(tspan => {
                         if (tspan.textContent.trim() === 'Shield UI Chart') {
                             tspan.style.display = 'none';
                         }
@@ -289,7 +558,6 @@
                     exportButtons.forEach(exportButton => {
                         exportButton.innerHTML += '<i class="fa fa-download"></i>';
                     });
-
                     clearInterval(demo_cleaner);
                 }
             }, 1000)
