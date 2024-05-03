@@ -76,6 +76,17 @@
                         </div>
                     </div>
                 </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>new sleep chart</h3>
+                            </div>
+                            <div id="new_sleep_chart" class="panel-body mt-5">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -87,7 +98,6 @@
           href="{% static 'assets/css/light_bootstrap_all.min.css' %}"/>
     <script type="text/javascript"
             src="{% static 'assets/js/shieldui_all.min.js' %}"></script>
-
     <script>
         // Function to show loader
         function showLoader() {
@@ -114,6 +124,7 @@
                         if (dataArray['fitbit_fetch_sleep_result'] !== null && dataArray['fitbit_fetch_spo2_result'] !== null && dataArray['fitbit_fetch_heart_rate_result'] !== null){
                             clearInterval(chart_data_weight);
                             renderCharts(dataArray)
+                            renderSleepCharts(dataArray)
                             hideLoader();
                         }
                     }, 1000)
@@ -318,7 +329,7 @@
             fitbit_fetch_sleep()
             fitbit_fetch_spo2()
             fitbit_fetch_heart_rate()
-
+            
             function renderCharts(dataArray) {
                 {#const data1 = dataArray.fitbit_fetch_weight_result#}
                 const data2 = dataArray.fitbit_fetch_sleep_result
@@ -328,7 +339,7 @@
                 console.log(data2)
                 console.log(data3)
                 console.log(data4)
-                
+
                 jQuery(function ($) {
                     try {
                         $("#chart_sleep").shieldChart({
@@ -375,7 +386,7 @@
                                 },
                             ]
                         });
-                    } catch (err){
+                    } catch (err) {
                         console.log('render chart_sleep err: ' + err)
                         document.getElementById('chart_sleep').innerText = 'No Data'
                     }
@@ -424,103 +435,209 @@
                                 },
                             ]
                         });
-                    } catch (err){
+                    } catch (err) {
                         console.log('render chart_spo2 err: ' + err)
                         document.getElementById('chart_spo2').innerText = 'No Data'
                     }
                     try {
                         $("#chart_heart_rate").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date"
+                            exportOptions: {
+                                image: true,
+                                print: false
                             },
-                            axisTickText: {
-                                enabled: true,
-                                step: 20,
-                                textAngle: 0,
+                            axisX: {
+                                title: {
+                                    text: "Date"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 20,
+                                    textAngle: 0,
+                                },
+                                categoricalValues: data4.map(item => item[0]),
                             },
-                            categoricalValues: data4.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Heart Rate"
-                            }
-                        },
-                        seriesSettings: {
-                            line: {
-                                enablePointSelection: true,
-                                pointMark: {
-                                    activeSettings: {
-                                        pointSelectedState: {
-                                            drawWidth: 4,
-                                            drawRadius: 4
+                            axisY: {
+                                title: {
+                                    text: "Heart Rate"
+                                }
+                            },
+                            seriesSettings: {
+                                line: {
+                                    enablePointSelection: true,
+                                    pointMark: {
+                                        activeSettings: {
+                                            pointSelectedState: {
+                                                drawWidth: 4,
+                                                drawRadius: 4
+                                            }
                                         }
                                     }
                                 }
-                            }
-                        },
-                        dataSeries: [
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Out of Range min",
-                                stackIndex: 1,
-                                data: data4.map(item => item[1][0][1]),
                             },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Out of Range max",
-                                stackIndex: 1,
-                                data: data4.map(item => item[1][0][2]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Fat Burn min",
-                                stackIndex: 2,
-                                data: data4.map(item => item[1][1][1]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Fat Burn max",
-                                stackIndex: 2,
-                                data: data4.map(item => item[1][1][2]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Cardio min",
-                                stackIndex: 3,
-                                data: data4.map(item => item[1][2][1]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Cardio max",
-                                stackIndex: 3,
-                                data: data4.map(item => item[1][2][2]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Peak min",
-                                stackIndex: 4,
-                                data: data4.map(item => item[1][3][1]),
-                            },
-                            {
-                                seriesType: 'line',
-                                collectionAlias: "Peak max",
-                                stackIndex: 4,
-                                data: data4.map(item => item[1][3][2]),
-                            },
-                        ]
-                    });
-                    } catch (err){
+                            dataSeries: [
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Out of Range min",
+                                    stackIndex: 1,
+                                    data: data4.map(item => item[1][0][1]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Out of Range max",
+                                    stackIndex: 1,
+                                    data: data4.map(item => item[1][0][2]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Fat Burn min",
+                                    stackIndex: 2,
+                                    data: data4.map(item => item[1][1][1]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Fat Burn max",
+                                    stackIndex: 2,
+                                    data: data4.map(item => item[1][1][2]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Cardio min",
+                                    stackIndex: 3,
+                                    data: data4.map(item => item[1][2][1]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Cardio max",
+                                    stackIndex: 3,
+                                    data: data4.map(item => item[1][2][2]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Peak min",
+                                    stackIndex: 4,
+                                    data: data4.map(item => item[1][3][1]),
+                                },
+                                {
+                                    seriesType: 'line',
+                                    collectionAlias: "Peak max",
+                                    stackIndex: 4,
+                                    data: data4.map(item => item[1][3][2]),
+                                },
+                            ]
+                        });
+                    } catch (err) {
                         console.log('render chart_heart_rate err: ' + err)
                         document.getElementById('chart_heart_rate').innerText = 'No Data'
                     }
                 });
+            }
+            function renderSleepCharts(dataArray) {
+                const data = dataArray.fitbit_fetch_sleep_result;
+                const valueData = data.map(d => d.slice(1)); // Extract value arrays
+                
+                // Extracting data for D3
+                const dates = data.map(item => item[0]);
+                const asleep = data.map(item => item[1]);
+                const awake = data.map(item => item[2]);
+                const restless = data.map(item => item[3]);
+                
+                // Define chart dimensions
+                const width = 1000;
+                const height = 500;
+                const marginTop = 0;
+                const marginRight = 60;
+                const marginBottom = 60;
+                const marginLeft = 60;
+            
+                // Declare the x (horizontal position) scale.
+                const x = d3.scaleBand()
+                    .domain(dates)
+                    .range([marginLeft, width - marginRight])
+                    .padding(0.1);
+                
+                // Declare the y (vertical position) scale.
+                const y = d3.scaleLinear()
+                    .domain([0, d3.max(valueData.flat())])
+                    .range([height - marginBottom, marginTop]);
+                
+                // Create the SVG container.
+                const svg = d3.create("svg")
+                    .attr("viewBox", [0, 0, width, height])
+                    .attr("width", width + marginLeft + marginRight)
+                    .attr("height", height + marginTop + marginBottom)
+                    .attr("style", "max-width: 100%; height: auto;");
+                
+                // Define the tooltip
+                const tooltip = d3.select("body")
+                    .append("div")
+                    .attr("class", "tooltip")
+                    .style("opacity", 0)
+                    .style("position", "absolute");
 
-                hideDemoTspans()
+                // Plot asleep bars
+                svg.selectAll(".bar-asleep")
+                    .data(asleep)
+                    .enter().append("rect")
+                    .attr("class", "bar-asleep")
+                    .attr("x", (d, i) => x(dates[i]))
+                    .attr("width", x.bandwidth() / 3)
+                    .attr("y", d => y(d) - marginBottom)
+                    .attr("height", d => height - y(d))
+                    .attr("fill", "steelblue")
+                    .on("mouseover", function(d, i) {
+                        console.log(d)
+                        console.log(i)
+                        const date = dates[i];
+                        const value = d;
+                        // Show tooltip on hover
+                        tooltip.transition()
+                            .duration(200)
+                            .style("opacity", 1);
+                        tooltip.html(`Date: ${date}<br>Value: ${value}`)
+                            .style("left", (d3.event.pageX + 10) + "px")
+                            .style("top", (d3.event.pageY + 10) + "px");
+                    })
+                    .on("mouseout", function() {
+                        // Hide tooltip on mouseout
+                        tooltip.transition()
+                            .duration(500)
+                            .style("opacity", 0);
+                    });
+                                
+                // Plot awake bars
+                svg.selectAll(".bar-awake")
+                    .data(awake)
+                    .enter().append("rect")
+                    .attr("class", "bar-awake")
+                    .attr("x", (d, i) => x(dates[i]) + x.bandwidth() / 3)
+                    .attr("width", x.bandwidth() / 3)
+                    .attr("y", d => y(d) - marginBottom)
+                    .attr("height", d => height - y(d))
+                    .attr("fill", "orange");
+                
+                // Plot restless bars
+                svg.selectAll(".bar-restless")
+                    .data(restless)
+                    .enter().append("rect")
+                    .attr("class", "bar-restless")
+                    .attr("x", (d, i) => x(dates[i]) + 2 * x.bandwidth() / 3)
+                    .attr("width", x.bandwidth() / 3)
+                    .attr("y", d => y(d) - marginBottom)
+                    .attr("height", d => height - y(d))
+                    .attr("fill", "green");
+                
+                // Add the x-axis.
+                svg.append("g")
+                    .attr("transform", `translate(0,${height - marginBottom})`)
+                    .call(d3.axisBottom(x));
+                
+                // Add the y-axis.
+                svg.append("g")
+                    .attr("transform", `translate(${marginLeft},0)`)
+                    .call(d3.axisLeft(y));
+
+                // Append the SVG element.
+                document.getElementById('new_sleep_chart').append(svg.node());
             }
         }
 
