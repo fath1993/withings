@@ -98,6 +98,18 @@
                         </div>
                     </div>
                 </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h3>new chart all KG</h3>
+                            </div>
+                            <div id="new_chart_weight_kg" class="panel-body">
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -136,6 +148,7 @@
                         if (dataArray['withings_fetch_weight'] !== null && dataArray['withings_fetch_fat_free_mass'] !== null && dataArray['withings_fetch_fat_ratio'] !== null && dataArray['withings_fetch_fat_mass_weight'] !== null && dataArray['withings_fetch_muscle_mass'] !== null && dataArray['withings_fetch_bone_mass'] !== null){
                             clearInterval(chart_data_weight);
                             renderCharts(dataArray)
+                            renderNewWightCharts(dataArray)
                             hideLoader();
                         }
                     }, 1000)
@@ -669,6 +682,96 @@
                     }
                 });
                 hideDemoTspans()
+            }
+       
+            function renderNewWightCharts(dataArray) {
+                const data1 = dataArray['withings_fetch_weight']
+                const data2 = dataArray['withings_fetch_fat_free_mass']
+                const data3 = dataArray['withings_fetch_fat_ratio']
+                const data4 = dataArray['withings_fetch_fat_mass_weight']
+                const data5 = dataArray['withings_fetch_muscle_mass']
+                const data6 = dataArray['withings_fetch_bone_mass']
+                
+                const combinedArray = [];
+
+                let index = 1;
+                for (const key in dataArray) {
+                    const data = dataArray[key];
+                    data.forEach(item => {
+                        combinedArray.push({
+                            date: item[0],
+                            chart: key,
+                            value: item[1]
+                        });
+                    });
+                    index++;
+                }
+                
+                console.log(combinedArray);
+                
+                
+                // Define chart dimensions
+                const width = 1000;
+                const height = 500;
+                const marginTop = 0;
+                const marginRight = 60;
+                const marginBottom = 60;
+                const marginLeft = 60;
+            
+                // Declare the x (horizontal position) scale.
+                const x = d3.scaleBand()
+                    .domain(combinedArray.date)
+                    .range([marginLeft, width - marginRight])
+                    .padding(0.1);
+                
+                // Declare the y (vertical position) scale.
+                const y = d3.scaleLinear()
+                    .domain([0, d3.max(combinedArray, d => d.value)])
+                    .range([height - marginBottom, marginTop]);
+                
+                const color = d3.scaleOrdinal()
+                    .domain(combinedArray.map(d => d.chart))
+                    .range(d3.schemeCategory10);
+                
+                svg.append("g")
+                    .attr("transform", `translate(0,${height - marginBottom})`)
+                    .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0));
+                
+                // Create the SVG container.
+                const svg = d3.create("svg")
+                    .attr("viewBox", [0, 0, width, height])
+                    .attr("width", width + marginLeft + marginRight)
+                    .attr("height", height + marginTop + marginBottom)
+                    .attr("style", "max-width: 100%; height: auto;");
+                
+                // Add the x-axis.
+                svg.append("g")
+                    .attr("transform", `translate(0,${height - marginBottom})`)
+                    .call(d3.axisBottom(x));
+                
+                // Add the y-axis.
+                svg.append("g")
+                    .attr("transform", `translate(${marginLeft},0)`)
+                    .call(d3.axisLeft(y));
+                
+                
+                // Add a container for each series.
+                const serie = svg.append("g")
+                    .selectAll()
+                    .data(d3.group(combinedArray, d => d.chart))
+                    .join("g");
+                  
+                // Draw the lines.
+                serie.append("path")
+                    .attr("fill", "none")
+                    .attr("stroke", d => color(d[0]))
+                    .attr("stroke-width", 1.5)
+                    .attr("d", d => d3.line()
+                        .x(d => x(d.date))
+                        .y(d => y(d.value))(d[1]));  
+
+                // Append the SVG element.
+                document.getElementById('new_chart_weight_kg').append(svg.node());
             }
         }
         
