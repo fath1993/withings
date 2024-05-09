@@ -3,110 +3,118 @@
 {% load account_custom_tag %}
 
 {% block extra_head %}
-<link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
+    <link href="{% static 'assets/css/loader.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block main %}
-    <div class="container">
-        <div id="loader" class="loader"></div>
-        <div id="withings-main-container" hidden>
-            <!-- Bootstrap Charts - START -->
-            <div class="container">
-                <div class="row mb-5 mt-5">
-                    <div class="col-md-12">
-                        <table style="width: 100%; text-align: center; border: 2px solid black;">
-                            <tbody>
-                                <tr>
-                                    <th style="width:25%"><h2>First Name</h2></th>
-                                    <th style="width:25%"><h2>Last Name</h2></th>
-                                    <th style="width:25%"><h2>Sex</h2></th>
-                                    <th style="width:25%"><h2>Age</h2></th>
-                                </tr>
-                                <tr>
-                                    <td style="color: green"><h2>{{ patient_id|get_patient:'first_name' }}</h2></td>
-                                    <td style="color: green"><h2>{{ patient_id|get_patient:'last_name' }}</h2></td>
-                                    <td style="color: green"><h2>{{ patient_id|get_patient:'sex' }}</h2></td>
-                                    <td style="color: green"><h2>{{ patient_id|get_patient:'age' }}</h2></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Weight ({{ weight_range_default }})</h3>
-                            </div>
-                            <div id="chart_weight" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Fat Free Mass ({{ fat_free_mass_range_default }})</h3>
-                            </div>
-                            <div id="chart_fat_free_mass" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Fat Ratio ({{ fat_ratio_range_default }})</h3>
-                            </div>
-                            <div id="chart_fat_ratio" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Fat Mass Weight ({{ fat_mass_weight_range_default }})</h3>
-                            </div>
-                            <div id="chart_fat_mass_weight" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Muscle Mass ({{ muscle_mass_range_default }})</h3>
-                            </div>
-                            <div id="chart_muscle_mass" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>Bone Mass ({{ bone_mass_range_default }})</h3>
-                            </div>
-                            <div id="chart_bone_mass" class="panel-body">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="panel panel-default">
-                            <div class="panel-heading">
-                                <h3>new chart all KG</h3>
-                            </div>
-                            <div id="new_chart_weight_kg" class="panel-body">
-                            </div>
+    <div class="container-fluid">
+        <div class="row ">
+            <!-- Left Sidebar -->
+            <div class="col-sm-12 col-md-12 col-lg-3 bg-light">
+                {% include 'filter.html' %}
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="col-sm-12 col-md-12 col-lg-9">
+                <div id="loader" class="loader"></div>
+                <div id="withings-main-container" hidden>
+                    <!-- Bootstrap Charts - START -->
+                    <div class="container">
+                        <div class="row justify-content-between">
+                            <div class="col-xl">
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <ul class="nav nav-tabs my-1" id="myTab" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link active" id="weight-tab" data-toggle="tab" href="#weight_chart"
+                                                   role="tab" aria-controls="weight_chart" aria-selected="true">Sleep</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="fat_free_mass-tab" data-toggle="tab" href="#fat_free_mass_chart" role="tab"
+                                                   aria-controls="fat_free_mass_chart" aria-selected="false">Spo2</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="fat_ratio-tab" data-toggle="tab" href="#fat_ratio_chart" role="tab"
+                                                   aria-controls="fat_ratio_chart" aria-selected="false">Heart Rate</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="fat_mass_weight-tab" data-toggle="tab" href="#fat_mass_weight_chart" role="tab"
+                                                   aria-controls="fat_mass_weight_chart" aria-selected="false">Sleep</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="muscle_mass-tab" data-toggle="tab" href="#muscle_mass_chart" role="tab"
+                                                   aria-controls="muscle_mass_chart" aria-selected="false">Sleep</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="bone_mass-tab" data-toggle="tab" href="#bone_mass_chart" role="tab"
+                                                   aria-controls="bone_mass_chart" aria-selected="false">Sleep</a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" id="new_weight-tab" data-toggle="tab" href="#new_weight_chart" role="tab"
+                                                   aria-controls="new_weight_chart" aria-selected="false">Sleep</a>
+                                            </li>
+                                        </ul>
+                                        <div class="tab-content" id="myTabContent">
+                                            <div class="tab-pane fade show active" id="weight_chart" role="tabpanel" aria-labelledby="weight-tab">
+                                                <div class="card-header">
+                                                    <h3>Weight ({{ weight_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_weight" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="fat_free_mass_chart" role="tabpanel" aria-labelledby="fat_free_mass-tab">
+                                                <div class="card-header">
+                                                    <h3>Fat Free Mass ({{ fat_free_mass_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_fat_free_mass" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="fat_ratio_chart" role="tabpanel" aria-labelledby="fat_ratio-tab">
+                                                <div class="card-header">
+                                                    <h3>Fat Ratio ({{ fat_ratio_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_fat_ratio" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="fat_mass_weight_chart" role="tabpanel" aria-labelledby="fat_mass_weight-tab">
+                                                <div class="card-header">
+                                                    <h3>Fat Mass Weight ({{ fat_mass_weight_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_fat_mass_weight" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="muscle_mass_chart" role="tabpanel" aria-labelledby="muscle_mass-tab">
+                                                <div class="card-header">
+                                                    <h3>Muscle Mass ({{ muscle_mass_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_muscle_mass" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="bone_mass_chart" role="tabpanel" aria-labelledby="bone_mass-tab">
+                                                <div class="card-header">
+                                                    <h3>Bone Mass ({{ bone_mass_range_default }})</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="chart_bone_mass" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane fade" id="new_weight_chart" role="tabpanel" aria-labelledby="new_weight-tab">
+                                                <div class="card-header">
+                                                    <h3>new chart all KG</h3>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div id="new_chart_weight_kg" class="panel-body"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>    
+                            </div>        
                         </div>
                     </div>
                 </div>
@@ -137,7 +145,7 @@
         function fetchDataAndRenderChart() {
             // Count to track the number of fetch requests completed
             let fetchCount = 0;
-            
+
             const dataArray = {}
 
             // Callback function to render chart once all fetch requests are completed
@@ -145,7 +153,7 @@
                 fetchCount++;
                 if (fetchCount === 5) {
                     var chart_data_weight = setInterval(() => {
-                        if (dataArray['withings_fetch_weight'] !== null && dataArray['withings_fetch_fat_free_mass'] !== null && dataArray['withings_fetch_fat_ratio'] !== null && dataArray['withings_fetch_fat_mass_weight'] !== null && dataArray['withings_fetch_muscle_mass'] !== null && dataArray['withings_fetch_bone_mass'] !== null){
+                        if (dataArray['withings_fetch_weight'] !== null && dataArray['withings_fetch_fat_free_mass'] !== null && dataArray['withings_fetch_fat_ratio'] !== null && dataArray['withings_fetch_fat_mass_weight'] !== null && dataArray['withings_fetch_muscle_mass'] !== null && dataArray['withings_fetch_bone_mass'] !== null) {
                             clearInterval(chart_data_weight);
                             renderCharts(dataArray)
                             renderNewWightCharts(dataArray)
@@ -189,7 +197,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -203,7 +211,7 @@
                         document.getElementById('chart_weight').innerText = 'No Data'
                     });
             }
-            
+
             function withings_fetch_fat_free_mass() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
@@ -238,7 +246,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -252,7 +260,7 @@
                         document.getElementById('chart_fat_free_mass').innerText = 'No Data'
                     });
             }
-            
+
             function withings_fetch_fat_ratio() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
@@ -287,7 +295,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -301,7 +309,7 @@
                         document.getElementById('chart_fat_ratio').innerText = 'No Data'
                     });
             }
-            
+
             function withings_fetch_fat_mass_weight() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
@@ -336,7 +344,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -350,7 +358,7 @@
                         document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
                     });
             }
-            
+
             function withings_fetch_muscle_mass() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
@@ -385,7 +393,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -399,7 +407,7 @@
                         document.getElementById('chart_muscle_mass').innerText = 'No Data'
                     });
             }
-            
+
             function withings_fetch_bone_mass() {
                 const formData = new FormData();
                 formData.append('patient_id', "{{ patient_id }}")
@@ -434,7 +442,7 @@
                                 const hours = date.getHours();
                                 const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                 const weekday = weekdays[date.getDay()];
-                                
+
                                 const value = weight / 1000
                                 weight_data_array.push([`${weekday} - day: ${day} - hour: ${hours}`, value]);
                             }
@@ -448,7 +456,7 @@
                         document.getElementById('chart_bone_mass').innerText = 'No Data'
                     });
             }
-            
+
             withings_fetch_weight()
             withings_fetch_fat_free_mass()
             withings_fetch_fat_ratio()
@@ -484,7 +492,7 @@
                                     enabled: true,
                                     step: 3,
                                     textAngle: 0,
-                                    format: function(text, axis, chart) {
+                                    format: function (text, axis, chart) {
                                         return text.match(/day: (\d+)/)[1];
                                     }
                                 },
@@ -501,7 +509,7 @@
                                 data: data1
                             }]
                         });
-                    } catch (err){
+                    } catch (err) {
                         console.log('renderWeightChart err: ' + err)
                         document.getElementById('chart_weight').innerText = 'No Data'
                     }
@@ -519,7 +527,7 @@
                                     enabled: true,
                                     step: 3,
                                     textAngle: 0,
-                                    format: function(text, axis, chart) {
+                                    format: function (text, axis, chart) {
                                         return text.match(/day: (\d+)/)[1];
                                     }
                                 },
@@ -536,154 +544,154 @@
                                 data: data2
                             }]
                         });
-                    } catch (err){
+                    } catch (err) {
                         console.log(err)
                         document.getElementById('chart_fat_free_mass').innerText = 'No Data'
                     }
                     try {
                         $("#chart_fat_ratio").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
+                            exportOptions: {
+                                image: true,
+                                print: false
                             },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function (text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data3.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Fat Ratio (%)"
                                 }
                             },
-                            categoricalValues: data3.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Fat Ratio (%)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "fat ratio",
-                            seriesType: "line",
-                            data: data3
-                        }]
-                    });
-                    } catch (err){
+                            dataSeries: [{
+                                collectionAlias: "fat ratio",
+                                seriesType: "line",
+                                data: data3
+                            }]
+                        });
+                    } catch (err) {
                         console.log(err)
                         document.getElementById('chart_fat_ratio').innerText = 'No Data'
                     }
                     try {
                         $("#chart_fat_mass_weight").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
+                            exportOptions: {
+                                image: true,
+                                print: false
                             },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function (text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data4.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Fat Mass Weight (Kg)"
                                 }
                             },
-                            categoricalValues: data4.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Fat Mass Weight (Kg)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "fat mass weight",
-                            seriesType: "line",
-                            data: data4
-                        }]
-                    });
-                    } catch (err){
+                            dataSeries: [{
+                                collectionAlias: "fat mass weight",
+                                seriesType: "line",
+                                data: data4
+                            }]
+                        });
+                    } catch (err) {
                         console.log(err)
                         document.getElementById('chart_fat_mass_weight').innerText = 'No Data'
                     }
                     try {
                         $("#chart_muscle_mass").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
+                            exportOptions: {
+                                image: true,
+                                print: false
                             },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function (text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data5.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Muscle Mass (Kg)"
                                 }
                             },
-                            categoricalValues: data5.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Muscle Mass (Kg)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "miscle mass",
-                            seriesType: "line",
-                            data: data5
-                        }]
-                    });
-                    } catch (err){
+                            dataSeries: [{
+                                collectionAlias: "miscle mass",
+                                seriesType: "line",
+                                data: data5
+                            }]
+                        });
+                    } catch (err) {
                         console.log(err)
                         document.getElementById('chart_muscle_mass').innerText = 'No Data'
                     }
                     try {
                         $("#chart_bone_mass").shieldChart({
-                        exportOptions: {
-                            image: true,
-                            print: false
-                        },
-                        axisX: {
-                            title: {
-                                text: "Date (day of month)"
+                            exportOptions: {
+                                image: true,
+                                print: false
                             },
-                            axisTickText: {
-                                enabled: true,
-                                step: 3,
-                                textAngle: 0,
-                                format: function(text, axis, chart) {
-                                    return text.match(/day: (\d+)/)[1];
+                            axisX: {
+                                title: {
+                                    text: "Date (day of month)"
+                                },
+                                axisTickText: {
+                                    enabled: true,
+                                    step: 3,
+                                    textAngle: 0,
+                                    format: function (text, axis, chart) {
+                                        return text.match(/day: (\d+)/)[1];
+                                    }
+                                },
+                                categoricalValues: data6.map(item => item[0]),
+                            },
+                            axisY: {
+                                title: {
+                                    text: "Bone Mass (Kg)"
                                 }
                             },
-                            categoricalValues: data6.map(item => item[0]),
-                        },
-                        axisY: {
-                            title: {
-                                text: "Bone Mass (Kg)"
-                            }
-                        },
-                        dataSeries: [{
-                            collectionAlias: "bone mass",
-                            seriesType: "line",
-                            data: data6
-                        }]
-                    });
-                    } catch (err){
+                            dataSeries: [{
+                                collectionAlias: "bone mass",
+                                seriesType: "line",
+                                data: data6
+                            }]
+                        });
+                    } catch (err) {
                         console.log(err)
                         document.getElementById('chart_bone_mass').innerText = 'No Data'
                     }
                 });
                 hideDemoTspans()
             }
-       
+
             function renderNewWightCharts(dataArray) {
                 const data1 = dataArray['withings_fetch_weight']
                 const data2 = dataArray['withings_fetch_fat_free_mass']
@@ -691,7 +699,7 @@
                 const data4 = dataArray['withings_fetch_fat_mass_weight']
                 const data5 = dataArray['withings_fetch_muscle_mass']
                 const data6 = dataArray['withings_fetch_bone_mass']
-                
+
                 const combinedArray = [];
 
                 let index = 1;
@@ -706,10 +714,10 @@
                     });
                     index++;
                 }
-                
+
                 console.log(combinedArray);
-                
-                
+
+
                 // Define chart dimensions
                 const width = 1000;
                 const height = 500;
@@ -717,50 +725,50 @@
                 const marginRight = 60;
                 const marginBottom = 60;
                 const marginLeft = 60;
-            
+
                 // Declare the x (horizontal position) scale.
                 const x = d3.scaleBand()
                     .domain(combinedArray.date)
                     .range([marginLeft, width - marginRight])
                     .padding(0.1);
-                
+
                 // Declare the y (vertical position) scale.
                 const y = d3.scaleLinear()
                     .domain([0, d3.max(combinedArray, d => d.value)])
                     .range([height - marginBottom, marginTop]);
-                
+
                 const color = d3.scaleOrdinal()
                     .domain(combinedArray.map(d => d.chart))
                     .range(d3.schemeCategory10);
-                
+
                 svg.append("g")
                     .attr("transform", `translate(0,${height - marginBottom})`)
                     .call(d3.axisBottom(x).ticks(width / 80).tickSizeOuter(0));
-                
+
                 // Create the SVG container.
                 const svg = d3.create("svg")
                     .attr("viewBox", [0, 0, width, height])
                     .attr("width", width + marginLeft + marginRight)
                     .attr("height", height + marginTop + marginBottom)
                     .attr("style", "max-width: 100%; height: auto;");
-                
+
                 // Add the x-axis.
                 svg.append("g")
                     .attr("transform", `translate(0,${height - marginBottom})`)
                     .call(d3.axisBottom(x));
-                
+
                 // Add the y-axis.
                 svg.append("g")
                     .attr("transform", `translate(${marginLeft},0)`)
                     .call(d3.axisLeft(y));
-                
-                
+
+
                 // Add a container for each series.
                 const serie = svg.append("g")
                     .selectAll()
                     .data(d3.group(combinedArray, d => d.chart))
                     .join("g");
-                  
+
                 // Draw the lines.
                 serie.append("path")
                     .attr("fill", "none")
@@ -768,24 +776,24 @@
                     .attr("stroke-width", 1.5)
                     .attr("d", d => d3.line()
                         .x(d => x(d.date))
-                        .y(d => y(d.value))(d[1]));  
+                        .y(d => y(d.value))(d[1]));
 
                 // Append the SVG element.
                 document.getElementById('new_chart_weight_kg').append(svg.node());
             }
         }
-        
+
         function isOutlier(number, numbers) {
             // Calculate the mean of the numbers
             const mean = numbers.reduce((acc, val) => acc + val, 0) / numbers.length;
-        
+
             // Calculate the standard deviation
             const stdDev = Math.sqrt(numbers.reduce((acc, val) => acc + Math.pow(val - mean, 2), 0) / numbers.length);
-        
+
             // Check if the number is an outlier
             return (number < (mean - 2 * stdDev) || number > (mean + 2 * stdDev));
         }
-        
+
         function hideDemoTspans() {
             var demo_cleaner = setInterval(() => {
                 const tspans = document.querySelectorAll('tspan');
@@ -804,13 +812,13 @@
                     exportButtons.forEach(exportButton => {
                         exportButton.innerHTML += '<i class="fa fa-download"></i>';
                     });
-                    
+
                     clearInterval(demo_cleaner);
                 }
             }, 1000)
         }
 
-        $(document).ready(function() {
+        $(document).ready(function () {
             showLoader();
             fetchDataAndRenderChart();
         })

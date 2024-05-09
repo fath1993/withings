@@ -36,11 +36,6 @@
                     {% endif %}    
                 {% endif %}
             </li>
-            {% if request.user.is_superuser %}
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'website:filter' %}">Advance Filter</a>
-            </li>
-            {% endif %}
             <li class="nav-item">
                 <a class="nav-link" href="{% url 'accounts:logout' %}">Logout</a>
             </li>
