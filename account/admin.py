@@ -9,7 +9,9 @@ class ProfileAdmin(admin.ModelAdmin):
         'first_name',
         'last_name',
         'sex',
-        'birthday',
+        'bmi',
+        'weight',
+        'height',
         'userid',
         'fitbit_userid',
     )
@@ -41,6 +43,9 @@ class ProfileAdmin(admin.ModelAdmin):
         'first_name',
         'last_name',
         'sex',
+        'bmi',
+        'weight',
+        'height',
         'birthday',
 
         'userid',

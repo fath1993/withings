@@ -19,7 +19,7 @@
                     <a class="nav-link" href="{% url 'accounts:auth-withings' %}"><span style="color: red">Connect</span> with Withings</a>
                 {% else %}
                     {% if request.user|has_user_active_token %}
-                    <a class="nav-link" href="{% url 'website:witings' %}"><span style="color: green">Connected</span> with Withings</a>
+                    <a class="nav-link" href="{% url 'website:landing' %}"><span style="color: green">Connected</span> with Withings</a>
                     {% else %}
                     <a class="nav-link" href="{% url 'accounts:auth-withings' %}"><span style="color: orange">ReConnect</span>  with Withings</a>    
                     {% endif %}    
@@ -30,7 +30,7 @@
                     <a class="nav-link" href="{% url 'accounts:auth-fitbit' %}"><span style="color: red">Connect</span> with Fitbit</a>
                 {% else %}
                     {% if request.user|fitbit_has_user_active_token %}
-                    <a class="nav-link" href="{% url 'website:fitbit' %}"><span style="color: green">Connected</span> with Fitbit</a>
+                    <a class="nav-link" href="{% url 'website:landing' %}"><span style="color: green">Connected</span> with Fitbit</a>
                     {% else %}
                     <a class="nav-link" href="{% url 'accounts:auth-fitbit' %}"><span style="color: orange">ReConnect</span>  with Fitbit</a>    
                     {% endif %}    

@@ -67,7 +67,7 @@ def auth_withings_callback_view(request):
         profile.save()
         custom_log(f'Data: {result_data}')
 
-        return redirect('website:witings')
+        return redirect('website:landing')
     else:
         return redirect('accounts:login')
 
@@ -147,7 +147,7 @@ def auth_fitbit_callback_view(request):
         profile.save()
         custom_log(f'Data: {result_data}')
 
-        return redirect('website:fitbit')
+        return redirect('website:landing')
     else:
         return redirect('accounts:login')
 

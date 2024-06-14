@@ -1,0 +1,92 @@
+{% load static %}
+{% load account_custom_tag %}
+<div class="container">
+    <div class="accordion" id="accordionExample">
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingOne">
+                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne"
+                        aria-expanded="true" aria-controls="collapseOne">
+                    Pro
+                </button>
+            </h2>
+            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne"
+                 data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <strong>Empty</strong>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingTwo">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo" id="get_patient_data_id" onclick="get_patient_data()">
+                    Patient Detail
+                </button>
+            </h2>
+            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo"
+                 data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <div class="row" id="sm_patient_detail_container">
+                        <strong>Empty</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingThree">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                    Treatment
+                </button>
+            </h2>
+            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree"
+                 data-bs-parent="#accordionExample">
+                <div class="accordion-body">
+                    <strong>Empty</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function get_patient_data() {
+        const sm_patient_detail_container = document.getElementById('sm_patient_detail_container')
+        
+        const loading_text = 'loading ...'
+        const loading_html = `<div class="spinner-border spinner-border-md text-light" role="status">
+                                  <span class="visually-hidden">${loading_text}</span>
+                                </div>`
+        const formData = new FormData();
+        formData.append('user_id', '{{ request.user.id }}')
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}')
+        const options = {
+            method: 'POST',
+            body: formData,
+        }
+        sm_patient_detail_container.innerHTML=loading_html
+        fetch('{% url 'website:get-patient-data' %}', options)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log(data)
+                sm_patient_detail_container.innerHTML=`{% include 'form-user-data.html' %}`
+                document.getElementById('fud_form_user_data_first_name').innerText=`${data['data'][0]['first_name']}`
+                document.getElementById('fud_form_user_data_last_name').innerText=`${data['data'][0]['last_name']}`
+                document.getElementById('fud_form_user_data_sex').innerText=`${data['data'][0]['sex']}`
+                document.getElementById('fud_form_user_data_age').innerText=`${data['data'][0]['age']}`
+                document.getElementById('fud_form_user_data_bmi').innerText=`${data['data'][0]['bmi']}`
+                document.getElementById('fud_form_user_data_weight').innerText=`${data['data'][0]['weight']}`
+                document.getElementById('fud_form_user_data_height').innerText=`${data['data'][0]['height']}`
+                document.getElementById('get_patient_data_id').onclick=""
+                
+            })
+            .catch(error => {
+                console.log(error)
+            });
+    }
+</script>
