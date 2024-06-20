@@ -42,7 +42,10 @@ class ServiceApiView(APIView):
                                              'fitbit_fetch_sleep_log_by_date_range',
                                              'fitbit_fetch_body_time_series_by_date',
                                              'fitbit_fetch_body_time_series_by_date_range',
+                                             'fitbit_fetch_activity_time_series_by_date',
+                                             'fitbit_fetch_activity_time_series_by_date_range',
                                              'withings_weight',
+                                             'withings_fetch_height',
                                              'withings_fat_free_mass',
                                              'withings_fat_ratio',
                                              'withings_fat_mass_weight',
@@ -226,6 +229,50 @@ class ServiceApiView(APIView):
                                         f'مقدار date_to ارسال نشده است'))
                     return fitbit_fetch_body_time_series_by_date_range(user, resource, date_from, date_to)
 
+
+                if request_data == 'fitbit_fetch_activity_time_series_by_date':
+                    try:
+                        resource = front_input['resource']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار resource ارسال نشده است'))
+                    try:
+                        date = front_input['date']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار date ارسال نشده است'))
+                    try:
+                        period = front_input['period']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار period ارسال نشده است'))
+                    return fitbit_fetch_activity_time_series_by_date(user, resource, date, period)
+
+                if request_data == 'fitbit_fetch_activity_time_series_by_date_range':
+                    try:
+                        resource = front_input['resource']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار resource ارسال نشده است'))
+                    try:
+                        date_from = front_input['date_from']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار date_from ارسال نشده است'))
+                    try:
+                        date_to = front_input['date_to']
+                    except:
+                        return JsonResponse(
+                            create_json('post', 'دریافت داده', 'ناموفق',
+                                        f'مقدار date_to ارسال نشده است'))
+                    return fitbit_fetch_activity_time_series_by_date_range(user, resource, date_from, date_to)
+
+
                 try:
                     date_from = front_input['date_from']
                     date_from = get_date_timestamp(date_from)
@@ -239,6 +286,8 @@ class ServiceApiView(APIView):
 
                 if request_data == 'withings_weight':
                     return withings_fetch_weight(user, date_from, date_to)
+                if request_data == 'withings_fetch_height':
+                    return withings_fetch_height(user, date_from, date_to)
                 if request_data == 'withings_fat_free_mass':
                     return withings_fetch_fat_free_mass(user, date_from, date_to)
                 if request_data == 'withings_fat_ratio':
@@ -282,6 +331,39 @@ def withings_fetch_weight(user, date_from: None, date_to: None):
         data = {
             "action": "getmeas",
             "meastype": "1",
+            "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+            "startdate": date_from,
+            "enddate": date_to,
+        }
+
+    try:
+        response = requests.get(endpoint_url, headers=headers, data=data)
+        if response.status_code == 200:
+            data = response.json()
+            return JsonResponse(data)
+        else:
+            return JsonResponse({"message": f"response.status_code == {response.status_code}"})
+    except Exception as e:
+        return JsonResponse({"message": f"exception happens. err: {e}"})
+
+
+def withings_fetch_height(user, date_from: None, date_to: None):
+    endpoint_url = 'https://wbsapi.withings.net/measure'
+
+    headers = {
+        'Authorization': f'Bearer {user.user_profile.access_token}'
+    }
+
+    if date_from and date_to:
+        data = {
+            "action": "getmeas",
+            "meastype": "4",
+            "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
+        }
+    else:
+        data = {
+            "action": "getmeas",
+            "meastype": "4",
             "category": "1",  # or 2.  1 for real measures, 2 for user objectives.
             "startdate": date_from,
             "enddate": date_to,
@@ -593,6 +675,45 @@ def fitbit_fetch_heart_rate_time_series_by_date(user, date, period):
     except Exception as e:
         return JsonResponse(
             {"message": f"exception happens. err: {e}"})
+
+
+
+
+
+
+
+def fitbit_fetch_activity_time_series_by_date(user, resource, date, period):
+    endpoint_url = f'https://api.fitbit.com/1/user/{user.user_profile.fitbit_userid}/activities/{resource}/date/{date}/{period}.json'
+    headers = {
+        'Authorization': f'Bearer {user.user_profile.fitbit_access_token}'
+    }
+    try:
+        response = requests.get(endpoint_url, headers=headers)
+        data = response.json()
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse(
+            {"message": f"exception happens. err: {e}"})
+
+
+def fitbit_fetch_activity_time_series_by_date_range(user, resource, date_from, date_to):
+    endpoint_url = f'https://api.fitbit.com/1/user/{user.user_profile.fitbit_userid}/activities/{resource}/date/{date_from}/{date_to}.json'
+    headers = {
+        'Authorization': f'Bearer {user.user_profile.fitbit_access_token}'
+    }
+    try:
+        response = requests.get(endpoint_url, headers=headers)
+        data = response.json()
+        return JsonResponse(data, safe=False)
+    except Exception as e:
+        return JsonResponse(
+            {"message": f"exception happens. err: {e}"})
+
+
+
+
+
+
 
 
 class DashboardView:
